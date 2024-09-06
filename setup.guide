@@ -1,0 +1,3 @@
+
+Create multiple folders at once
+"controllers", "routes", "config", "dist", "functions", "logs", "middlewares", "database" | ForEach-Object { New-Item -Path . -Name $_ -ItemType "Directory" -Force }
