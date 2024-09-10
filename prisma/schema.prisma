@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// SUPABASE CONFIG
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Estates {
+  id            Int      @id @default(autoincrement())
+  estate_name   String   @default("")
+  total_units   Int      @default(0)
+  property_type String   @db.VarChar(100)
+  created_at    DateTime @default(now()) @db.Timestamp()
+  updated_at    DateTime @default(now()) @updatedAt @db.Timestamp()
+
+  EstateResidents EstateResidents[]
+  Feedbacks       Feedbacks[]
+  Concerns        Concerns[]
+  Transactions    Transactions[]
+
+  @@map("estates")
+}
+
+model EstateResidents {
+  id            Int    @id @default(autoincrement())
+  estate_id     Int
+  email         String @db.VarChar(255)
+  account_code  String @db.VarChar(50)
+  block         String @db.VarChar(10)
+  unit_no       String @db.VarChar(10)
+  full_name     String @db.VarChar(255)
+  resident_type String @db.VarChar(20)
+  contact_no    String @db.VarChar(20)
+
+  Estates   Estates?    @relation(fields: [estate_id], references: [id])
+  Feedbacks Feedbacks[]
+
+  @@map("estate_residents")
+}
+
+model Users {
+  id         Int      @id @default(autoincrement())
+  email      String   @db.VarChar(255)
+  role       String   @db.VarChar(100)
+  username   String   @db.Text
+  contact_no String   @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamp()
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp()
+
+  Feedbacks Feedbacks[]
+
+  @@map("users")
+}
+
+model Concerns {
+  id              Int      @id @default(autoincrement())
+  estate_id       Int
+  concern_name    String   @db.VarChar(50)
+  concern_type    String   @db.VarChar(50)
+  fix_duration    String   @db.VarChar(50)
+  currency_symbol String   @db.Char(5)
+  price_range     String   @db.VarChar(50)
+  created_at      DateTime @default(now()) @db.Timestamp()
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp()
+
+  Estates Estates? @relation(fields: [estate_id], references: [id])
+
+  @@map("concerns")
+}
+
+model Transactions {
+  id            Int      @id @default(autoincrement())
+  account_code  String   @db.VarChar(50)
+  posted_date   DateTime @db.Date()
+  ref_num_1     String   @db.VarChar(50)
+  ref_num_2     String   @db.VarChar(50)
+  description   String   @db.Text()
+  local_dr      Float    @default(0.00) @db.DoublePrecision()
+  local_cr      Float    @default(0.00) @db.DoublePrecision()
+  local_balance Float    @default(0.00) @db.DoublePrecision()
+  created_at    DateTime @default(now()) @db.Timestamp()
+  Estates       Estates? @relation(fields: [estatesId], references: [id])
+  estatesId     Int?
+
+  @@map("transactions")
+}
+
+model Feedbacks {
+  id                    Int      @id @default(autoincrement())
+  user_id               Int?
+  estate_id             Int
+  resident_id           Int
+  category_name         String   @db.VarChar(255)
+  subcategory           String   @db.VarChar(100)
+  concern_description   String   @db.Text
+  solution_provided     String   @db.Text
+  estimate_fix_duration String   @db.VarChar(100)
+  call_recording        String   @db.VarChar(255)
+  call_transcription    String   @db.VarChar(255)
+  maintenance_upload    String   @db.VarChar(255)
+  created_at            DateTime @default(now()) @db.Timestamp()
+
+  Users           Users?           @relation(fields: [user_id], references: [id])
+  Estates         Estates?         @relation(fields: [estate_id], references: [id])
+  EstateResidents EstateResidents? @relation(fields: [resident_id], references: [id])
+
+  @@map("feedbacks")
+}

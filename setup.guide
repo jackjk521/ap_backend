@@ -1,3 +1,10 @@
 
 Create multiple folders at once
 "controllers", "routes", "config", "dist", "functions", "logs", "middlewares", "database" | ForEach-Object { New-Item -Path . -Name $_ -ItemType "Directory" -Force }
+
+Steps
+npx tsc --init (for typescript config)
+npx prisma init --datasource-provider postgresql
+npx prisma db pull (test connection)
+npx prisma migrate dev (deploy in production)
+npx prisma generate
