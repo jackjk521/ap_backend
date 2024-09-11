@@ -7,7 +7,6 @@ const prisma = require("../../functions/prismaClient");
 const _MODULE = "FEEDBACK";
 
 class Feedbacks {
-
   // GET: /api/items-management/
   static async getItems(req, res) {
     /* 
@@ -193,44 +192,45 @@ class Feedbacks {
     */
 
     try {
-
       // GET DATA FROM BODY
       let body = req.body;
 
       // CHECK IF BODY IS EMPTY OR NOT
       if (Object.keys(body).length === 0) {
         throw new Error(
-          JSON.stringify({ apiCode: true, message: "No body passed" })
+          JSON.stringify({ apiCode: true, message: "NO BODY PASSED" })
         );
       }
-      console.log(body)
+      console.log(body);
 
       // GET USER ID FROM CUSTOMER REPRESENTATIVE NAME
+
       let userData = await prisma.users.findFirst({
-        where:{
-          username: "" // FROM BODY
+        where: {
+          username: body.username, // FROM BODY
         },
-        select:{
-          id: true
-        }
+        select: {
+          id: true,
+        },
       });
+
       // GET ESTATE ID FROM ESTATE NAME
       let estateData = await prisma.estates.findFirst({
-        where:{
-          estate_name: "" // FROM BODY
+        where: {
+          estate_name: body.estate, // FROM BODY
         },
-        select:{
-          id: true
-        }
+        select: {
+          id: true,
+        },
       });
       // GET RESIDENT ENTRY FROM BLOCK , UNIT NO AND ESTATE ID
       let residentData = await prisma.estateResidents.findFirst({
-        where:{
-          full_name: "" // FROM BODY
+        where: {
+          full_name: body.resident, // FROM BODY
         },
-        select:{
-          id: true
-        }
+        select: {
+          id: true,
+        },
       });
 
       // NEW OBJECT TO ADD TO FEEDBACK
@@ -238,30 +238,29 @@ class Feedbacks {
         user_id: userData.id,
         estate_id: estateData.id,
         resident_id: residentData.id,
-        category_name: "",
-        subcategory: "",
-        concern_description: "",
-        solution_provided: "", 
-        estimate_fix_duration: "",
-        call_recording: "",
-        call_transcription: "",
-        maintenance_upload: "",
-      }
+        category_name: body.category_name,
+        subcategory: body.subcategory,
+        concern_description: body.concern_description,
+        solution_provided: body.solution_provided,
+        estimate_fix_duration: body.estimate_fix_duration,
+        call_recording: body.call_recording,
+        call_transcription: body.call_transcription,
+        maintenance_upload: body.maintenance_upload,
+      };
 
-      console.log(newObj)
+      console.log(newObj);
 
       // CREATES NEW ENTRY
-      // let data = await prisma.feedbacks.create({
-      //   data: {
-      //     ...newObj,
-      //   },
-      // });
+      let data = await prisma.feedbacks.create({
+        data: {
+          ...newObj,
+        },
+      });
 
       // RESPONSE OBJECT IF SUCCESSFUL
       return res.json(
         ApiResponse("Successfully created feedback entry", data, StatusCodes.OK)
       );
-
     } catch (error) {
       // Parsing error
       // error.message is an error object property
@@ -273,7 +272,7 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in creating new item data";
+        message = "Error in creating new feedback data";
         data = error.message;
       }
 
@@ -434,7 +433,6 @@ class Feedbacks {
       return res.json(ApiResponse(message, data, statusCode, true));
     }
   }
-  
 }
 
 module.exports = Feedbacks;

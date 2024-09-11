@@ -7,9 +7,8 @@ const prisma = require("../../functions/prismaClient");
 const _MODULE = "FEEDBACK";
 
 class Feedbacks {
-
-  // GET: /api/items-management/
-  static async getItems(req, res) {
+  // GET: /api/residents/
+  static async getResidents(req, res) {
     /* 
       QUERY EXPECTED
       1. limit
@@ -18,31 +17,32 @@ class Feedbacks {
     */
 
     // Limit is to know the number of entries to returned, offset is used to know how many entries to skip from the start
-    const { limit, offset, search, filters, itemType } = req.query;
+    // const { limit, offset, search, filters, itemType } = req.query;
+
     try {
       // If limit or offset is undefined, throw error
-      if (limit === undefined || offset === undefined) {
-        throw new Error(
-          JSON.stringify({
-            apiCode: true,
-            message: "Limit and Offset must be passed",
-          })
-        );
-      }
+      // if (limit === undefined || offset === undefined) {
+      //   throw new Error(
+      //     JSON.stringify({
+      //       apiCode: true,
+      //       message: "Limit and Offset must be passed",
+      //     })
+      //   );
+      // }
 
       // Gets the items data that are not deleted with limit and offset for pagination
 
-      let searchString = search === undefined ? "" : search;
-      let searchItemType =
-        itemType === undefined || itemType === "undefined" ? "" : itemType;
-      let take = parseInt(limit);
-      let skip = parseInt(offset) * parseInt(limit);
+      // let searchString = search === undefined ? "" : search;
+      // let searchItemType =
+      //   itemType === undefined || itemType === "undefined" ? "" : itemType;
+      // let take = parseInt(limit);
+      // let skip = parseInt(offset) * parseInt(limit);
 
       // Filter by column and the value to filter
-      let filterList = filters === "{}" || filters === undefined ? "" : filters;
+      // let filterList = filters === "{}" || filters === undefined ? "" : filters;
 
       // Defining the where clause depending if there is a filter defined
-      let whereClause = { deleted_at: null };
+      // let whereClause = { deleted_at: null };
 
       // Check if filterList is empty or not
       // if (filterList != "") {
@@ -53,46 +53,41 @@ class Feedbacks {
       // }
 
       // Search filter
-      whereClause.OR = [
-        { item_name: { contains: searchString, mode: "insensitive" } },
-        // { item_type: { contains: searchString, mode: "insensitive" } },
-        { brand: { contains: searchString, mode: "insensitive" } },
-      ];
+      // whereClause.OR = [
+      //   { item_name: { contains: searchString, mode: "insensitive" } },
+      //   // { item_type: { contains: searchString, mode: "insensitive" } },
+      //   { brand: { contains: searchString, mode: "insensitive" } },
+      // ];
 
-      if (searchItemType !== "") {
-        whereClause["item_type"] = searchItemType;
-      }
+      // if (searchItemType !== "") {
+      //   whereClause["item_type"] = searchItemType;
+      // }
 
-      const data = await prisma.items.findMany({
-        where: whereClause,
+      const data = await prisma.estateResidents.findMany({
+        // where: whereClause,
         select: {
           id: true,
-          item_code: true,
-          item_name: true,
-          item_type: true,
-          brand: true,
-          description: true,
-          status: true,
-          remarks: true,
-          item_price: true,
-          item_category_id: true,
-          ItemCategories: {
-            select: {
-              item_category_name: true,
-            },
-          },
+          email: true,
+          account_code: true,
+          block: true,
+          unit_no: true,
+          full_name: true,
+          resident_type: true,
+          contact_no: true,
         },
-        skip: skip,
-        take: take,
+        // skip: skip,
+        // take: take,
         orderBy: [{ id: "desc" }],
       });
 
       // console.log(data);
-      const countData = await prisma.items.count({ where: whereClause });
+      const countData = await prisma.estateResidents.count({
+        // where: whereClause
+      });
 
       return res.json(
         ApiResponse(
-          "Successfully fetched all items data",
+          "Successfully fetched all estate residents",
           { totalRecords: countData, fetchedData: data },
           StatusCodes.OK
         )
@@ -109,7 +104,7 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in fetching items data";
+        message = "Error in fetching feedbacks data";
         data = error.message;
       }
 
@@ -195,12 +190,12 @@ class Feedbacks {
     try {
       // GET DATA FROM BODY
       let body = req.body;
-    //   const session_uuid = body.session_user_id;
-    //   const session_fullname = body.session_fullname;
-    //   delete body["session_user_id"];
-    //   delete body["session_fullname"];
-    //   const createdDate = localDate("CREATE");
-    //   const updatedDate = localDate("UPDATE");
+      //   const session_uuid = body.session_user_id;
+      //   const session_fullname = body.session_fullname;
+      //   delete body["session_user_id"];
+      //   delete body["session_fullname"];
+      //   const createdDate = localDate("CREATE");
+      //   const updatedDate = localDate("UPDATE");
 
       // CHECK IF BODY IS EMPTY OR NOT
       if (Object.keys(body).length === 0) {
@@ -224,12 +219,12 @@ class Feedbacks {
         category_name: "",
         subcategory: "",
         concern_description: "",
-        solution_provided: "", 
+        solution_provided: "",
         estimate_fix_duration: "",
         call_recording: "",
         call_transcription: "",
         maintenance_upload: "",
-      }
+      };
 
       // CREATES NEW ENTRY
       let data = await prisma.feedbacks.create({
@@ -242,7 +237,6 @@ class Feedbacks {
       return res.json(
         ApiResponse("Successfully created feedback entry", data, StatusCodes.OK)
       );
-
     } catch (error) {
       // Parsing error
       // error.message is an error object property
@@ -415,7 +409,6 @@ class Feedbacks {
       return res.json(ApiResponse(message, data, statusCode, true));
     }
   }
-  
 }
 
 module.exports = Feedbacks;

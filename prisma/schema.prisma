@@ -33,18 +33,18 @@ model Estates {
 }
 
 model EstateResidents {
-  id            Int    @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   estate_id     Int
-  email         String @db.VarChar(255)
-  account_code  String @db.VarChar(50)
-  block         String @db.VarChar(10)
-  unit_no       String @db.VarChar(10)
-  full_name     String @db.VarChar(255)
-  resident_type String @db.VarChar(20)
-  contact_no    String @db.VarChar(20)
-  created_at     DateTime @default(now()) @db.Timestamp()
-  updated_at     DateTime @default(now()) @updatedAt @db.Timestamp()
-  
+  email         String   @db.VarChar(255)
+  account_code  String   @db.VarChar(50)
+  block         String   @db.VarChar(10)
+  unit_no       String   @db.VarChar(10)
+  full_name     String   @db.VarChar(255)
+  resident_type String   @db.VarChar(20)
+  contact_no    String   @db.VarChar(20)
+  created_at    DateTime @default(now()) @db.Timestamp()
+  updated_at    DateTime @default(now()) @updatedAt @db.Timestamp()
+
   Estates   Estates?    @relation(fields: [estate_id], references: [id])
   Feedbacks Feedbacks[]
 
@@ -57,7 +57,8 @@ model Users {
   role       String   @db.VarChar(100)
   username   String   @db.Text
   contact_no String   @db.VarChar(20)
- 
+  created_at DateTime @default(now()) @db.Timestamp()
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp()
 
   Feedbacks Feedbacks[]
 
@@ -91,8 +92,10 @@ model Transactions {
   local_cr      Float    @default(0.00) @db.DoublePrecision()
   local_balance Float    @default(0.00) @db.DoublePrecision()
   created_at    DateTime @default(now()) @db.Timestamp()
-  Estates       Estates? @relation(fields: [estatesId], references: [id])
-  estatesId     Int?
+  updated_at    DateTime @default(now()) @updatedAt @db.Timestamp()
+
+  Estates   Estates? @relation(fields: [estatesId], references: [id])
+  estatesId Int?
 
   @@map("transactions")
 }
@@ -111,6 +114,7 @@ model Feedbacks {
   call_transcription    String   @db.VarChar(255)
   maintenance_upload    String   @db.VarChar(255)
   created_at            DateTime @default(now()) @db.Timestamp()
+  updated_at            DateTime @default(now()) @updatedAt @db.Timestamp()
 
   Users           Users?           @relation(fields: [user_id], references: [id])
   Estates         Estates?         @relation(fields: [estate_id], references: [id])

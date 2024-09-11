@@ -2,12 +2,13 @@ const express = require("express");
 const AsyncHandler = require("express-async-handler");
 const router = express.Router();
 
-const FeedbackController = require("../../controllers/feedbacks/index");
+const ResidentController = require("../../controllers/residents/index");
 
 // MAIN ROUTES
 
-// // GET: /api/items-management/
-// router.get("/", AsyncHandler(ItemsManagement.getItems));
+// GET: /api/residents/
+router.get("/", AsyncHandler(ResidentController.getResidents));
+
 // // GET: /api/items-management/item-categories
 // router.get("/item-categories", AsyncHandler(ItemsManagement.getItemCategories));
 // // GET: /api/items-management/list
@@ -23,7 +24,7 @@ const FeedbackController = require("../../controllers/feedbacks/index");
 // );
 
 // POST: /api/feedbacks/
-router.post("/", AsyncHandler(FeedbackController.addFeedback));
+// router.post("/", AsyncHandler(FeedbackController.addFeedback));
 // // PUT: /api/items-management/:id
 // router.put("/:id", AsyncHandler(ItemsManagement.updateItem));
 // // PATCH: /api/items-management/:id
