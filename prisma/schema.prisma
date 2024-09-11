@@ -16,12 +16,13 @@ datasource db {
 }
 
 model Estates {
-  id            Int      @id @default(autoincrement())
-  estate_name   String   @default("")
-  total_units   Int      @default(0)
-  property_type String   @db.VarChar(100)
-  created_at    DateTime @default(now()) @db.Timestamp()
-  updated_at    DateTime @default(now()) @updatedAt @db.Timestamp()
+  id             Int      @id @default(autoincrement())
+  estate_name    String   @default("")
+  country_origin String   @db.VarChar(100)
+  total_units    Int      @default(0)
+  property_type  String   @db.VarChar(100)
+  created_at     DateTime @default(now()) @db.Timestamp()
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamp()
 
   EstateResidents EstateResidents[]
   Feedbacks       Feedbacks[]
@@ -41,7 +42,9 @@ model EstateResidents {
   full_name     String @db.VarChar(255)
   resident_type String @db.VarChar(20)
   contact_no    String @db.VarChar(20)
-
+  created_at     DateTime @default(now()) @db.Timestamp()
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamp()
+  
   Estates   Estates?    @relation(fields: [estate_id], references: [id])
   Feedbacks Feedbacks[]
 
@@ -54,8 +57,7 @@ model Users {
   role       String   @db.VarChar(100)
   username   String   @db.Text
   contact_no String   @db.VarChar(20)
-  created_at DateTime @default(now()) @db.Timestamp()
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp()
+ 
 
   Feedbacks Feedbacks[]
 
