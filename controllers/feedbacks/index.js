@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const ApiResponse = require("../response/apiResponse");
-const supabase = require("../../functions/supabaseClient");
+// const supabase = require("../../functions/supabaseClient");
 const prisma = require("../../functions/prismaClient");
 // const localDate = require("../../functions/localDate");
 // const LogsController = require("../logsManagement");
