@@ -39,7 +39,7 @@ const ErrorLogger = require("./config/logger");
 include environment variables
 ==============================*/
 const ENVIRONMENT = process.env.ENVIRONMENT || "production";
-const HTTP_PORT = process.env.HTTP_PORT || 80;
+const HTTP_PORT = process.env.HTTP_PORT || 3000;
 // const HTTPS_PORT = process.env.HTTPS_PORT || 443; // for production use
 // const SERVER_DOMAIN = process.env.SERVER_DOMAIN || null; // for production use
 
