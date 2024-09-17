@@ -22,7 +22,7 @@ const logger = require("morgan");
 http & https Server
 ==============================*/
 const http = require("http");
-// const https = require("https"); // for production use
+const https = require("https"); // for production use
 
 /*==============================
 include middlewares, custom middlewares, Routes and Database connection
@@ -40,8 +40,8 @@ include environment variables
 ==============================*/
 const ENVIRONMENT = process.env.ENVIRONMENT || "production";
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
-// const HTTPS_PORT = process.env.HTTPS_PORT || 443; // for production use
-// const SERVER_DOMAIN = process.env.SERVER_DOMAIN || null; // for production use
+const HTTPS_PORT = process.env.HTTPS_PORT || 443; // for production use
+const SERVER_DOMAIN = process.env.SERVER_DOMAIN || null; // for production use
 
 /*==============================
 server application configurations
@@ -80,25 +80,37 @@ const httpServer = http.createServer(app);
 /*==============================
 create https (production) server instance
 ==============================*/
-// const httpsServer = https.createServer(
-//   {
-//     key: fs.readFileSync("./config/privkey.pem", "utf-8"),
-//     cert: fs.readFileSync("./config/cert.pem", "utf-8"),
-//     ca: fs.readFileSync("./config/chain.pem", "utf-8"),
-//   },
-//   app
-// ); // for production use
+const httpsServer =
+  ENVIRONMENT !== "development"
+    ? https.createServer(
+        {
+          key: fs.readFileSync("./config/ssl/privkey.pem", "utf-8"),
+          cert: fs.readFileSync("./config/ssl/cert.pem", "utf-8"),
+          ca: fs.readFileSync("./config/ssl/chain.pem", "utf-8"),
+        },
+        app
+      )
+    : http.createServer(app);
 
 /*==============================
 start server listen
 ==============================*/
-httpServer.listen(HTTP_PORT, () => console.log("http server started!"));
-// httpsServer.listen(HTTPS_PORT, SERVER_DOMAIN, async () => {
-//   if (process.env.ENVIRONMENT === "development")
-//     console.log(
-//       "Listening on %s:%s",
-//       httpsServer.address().address,
-//       httpsServer.address().port
-//     );
-//   else console.log("Server started!");
-// }); // for production use
+// httpServer.listen(HTTP_PORT, () => console.log("http server started!"));
+httpsServer.listen(
+  ENVIRONMENT != "development" ? HTTPS_PORT : HTTP_PORT,
+  SERVER_DOMAIN,
+  async () => {
+    if (process.env.ENVIRONMENT === "development")
+      console.log(
+        "Development Server is listening on %s:%s",
+        httpsServer.address().address,
+        httpsServer.address().port
+      );
+    else
+      console.log(
+        "Production Server started!",
+        httpsServer.address().address,
+        httpsServer.address().port
+      );
+  }
+); // for production use
