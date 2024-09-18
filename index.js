@@ -97,7 +97,7 @@ start server listen
 ==============================*/
 // httpServer.listen(HTTP_PORT, () => console.log("http server started!"));
 httpsServer.listen(
-  ENVIRONMENT != "development" ? HTTPS_PORT : HTTP_PORT,
+  HTTP_PORT,
   SERVER_DOMAIN,
   async () => {
     if (process.env.ENVIRONMENT === "development")
