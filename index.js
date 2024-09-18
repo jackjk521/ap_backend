@@ -85,8 +85,8 @@ const httpsServer =
     ? https.createServer(
         {
           key: fs.readFileSync("./config/ssl/privatekeys.pem", "utf-8"),
-          cert: fs.readFileSync("./config/ssl/cert.pem", "utf-8"),
-          ca: fs.readFileSync("./config/ssl/chain.pem", "utf-8"),
+          cert: fs.readFileSync("./config/ssl/ap_ec2_cert.pem", "utf-8"),
+          ca: fs.readFileSync("./config/ssl/ap_ec2_chain.pem", "utf-8"),
         },
         app
       )
