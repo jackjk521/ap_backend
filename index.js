@@ -96,21 +96,17 @@ const httpsServer =
 start server listen
 ==============================*/
 // httpServer.listen(HTTP_PORT, () => console.log("http server started!"));
-httpsServer.listen(
-  HTTP_PORT,
-  SERVER_DOMAIN,
-  async () => {
-    if (process.env.ENVIRONMENT === "development")
-      console.log(
-        "Development Server is listening on %s:%s",
-        httpsServer.address().address,
-        httpsServer.address().port
-      );
-    else
-      console.log(
-        "Production Server started!",
-        httpsServer.address().address,
-        httpsServer.address().port
-      );
-  }
-); // for production use
+httpsServer.listen(HTTP_PORT, "0.0.0.0", async () => {
+  if (process.env.ENVIRONMENT === "development")
+    console.log(
+      "Development Server is listening on %s:%s",
+      httpsServer.address().address,
+      httpsServer.address().port
+    );
+  else
+    console.log(
+      "Production Server started!",
+      httpsServer.address().address,
+      httpsServer.address().port
+    );
+}); // for production use

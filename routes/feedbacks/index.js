@@ -24,8 +24,8 @@ const FeedbackController = require("../../controllers/feedbacks/index");
 
 // POST: /api/feedbacks/
 router.post("/", AsyncHandler(FeedbackController.addFeedback));
-// // PUT: /api/items-management/:id
-// router.put("/:id", AsyncHandler(ItemsManagement.updateItem));
+// PUT: /api/feedbacks/
+router.put("/", AsyncHandler(FeedbackController.updateFeedback));
 // // PATCH: /api/items-management/:id
 // router.patch("/:id", AsyncHandler(ItemsManagement.deleteItem));
 

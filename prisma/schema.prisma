@@ -10,8 +10,8 @@ generator client {
 
 // SUPABASE CONFIG
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
   // directUrl = env("DIRECT_URL")
 }
 
@@ -109,6 +109,7 @@ model Feedbacks {
   subcategory           String   @db.VarChar(100)
   concern_description   String   @db.Text
   solution_provided     String   @db.Text
+  solution_updates      String   @db.Text
   estimate_fix_duration String   @db.VarChar(100)
   call_recording        String   @db.VarChar(255)
   call_transcription    String   @db.VarChar(255)
