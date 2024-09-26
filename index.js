@@ -38,7 +38,7 @@ include environment variables
 ==============================*/
 const ENVIRONMENT = process.env.ENVIRONMENT || "production";
 const HTTP_PORT = process.env.HTTP_PORT || 3000;
-const HTTPS_PORT = process.env.HTTPS_PORT || 443; 
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 const SERVER_DOMAIN = process.env.SERVER_DOMAIN || "0.0.0.0";
 
 /*==============================
@@ -88,14 +88,16 @@ if (ENVIRONMENT !== "development") {
   try {
     httpsServer = https.createServer(
       {
-        key: fs.readFileSync("./config/ssl/privatekeys.pem", "utf-8"),
-        cert: fs.readFileSync("./config/ssl/ap_ec2_cert.pem", "utf-8"),
-        ca: fs.readFileSync("./config/ssl/ap_ec2_chain.pem", "utf-8"),
+        key: fs.readFileSync("./config/ssl/privkeys.pem", "utf-8"),
+        cert: fs.readFileSync("./config/ssl/full_chain.pem", "utf-8"),
       },
       app
     );
   } catch (error) {
-    console.error("Failed to start HTTPS server due to SSL certificate issue:", error);
+    console.error(
+      "Failed to start HTTPS server due to SSL certificate issue:",
+      error
+    );
     httpsServer = null;
   }
 }
@@ -106,18 +108,26 @@ start server listen
 if (ENVIRONMENT === "development") {
   // Start HTTP server in development mode
   httpServer.listen(HTTP_PORT, SERVER_DOMAIN, () => {
-    console.log(`Development HTTP Server listening at http://${SERVER_DOMAIN}:${HTTP_PORT}`);
+    console.log(
+      `Development HTTP Server listening at http://${SERVER_DOMAIN}:${HTTP_PORT}`
+    );
   });
 } else {
   // Start HTTPS server in production, fallback to HTTP if HTTPS fails
   if (httpsServer) {
     httpsServer.listen(HTTPS_PORT, SERVER_DOMAIN, () => {
-      console.log(`Production HTTPS Server listening at https://${SERVER_DOMAIN}:${HTTPS_PORT}`);
+      console.log(
+        `Production HTTPS Server listening at https://${SERVER_DOMAIN}:${HTTPS_PORT}`
+      );
     });
   } else {
-    console.warn("Falling back to HTTP in production due to HTTPS setup failure.");
+    console.warn(
+      "Falling back to HTTP in production due to HTTPS setup failure."
+    );
     httpServer.listen(HTTP_PORT, SERVER_DOMAIN, () => {
-      console.log(`Production HTTP Server listening at http://${SERVER_DOMAIN}:${HTTP_PORT}`);
+      console.log(
+        `Production HTTP Server listening at http://${SERVER_DOMAIN}:${HTTP_PORT}`
+      );
     });
   }
 }
@@ -139,7 +149,6 @@ const gracefulShutdown = () => {
 // Catch shutdown signals
 process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
-
 
 // /*==============================
 // core packages
