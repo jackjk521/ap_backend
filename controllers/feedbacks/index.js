@@ -66,7 +66,7 @@ class Feedbacks {
           Estates: {
             select: {
               estate_name: true,
-            }
+            },
           },
           category_name: true,
           subcategory: true,
@@ -249,6 +249,7 @@ class Feedbacks {
         subcategory: body.subcategory,
         concern_description: body.concern_description,
         solution_provided: body.solution_provided,
+        solution_updates: 'PENDING',
         estimate_fix_duration: body.estimate_fix_duration,
         call_recording: body.call_recording,
         call_transcription: body.call_transcription,
@@ -258,11 +259,17 @@ class Feedbacks {
       console.log(newObj);
 
       // CREATES NEW ENTRY
-      let data = await prisma.feedbacks.create({
-        data: {
-          ...newObj,
-        },
-      });
+      let data = [];
+      try {
+        data = await prisma.feedbacks.create({
+          data: {
+            ...newObj
+          },
+        });
+        console.log(data);
+      } catch (error) {
+        console.error("Error creating feedback:", error);
+      }
 
       // RESPONSE OBJECT IF SUCCESSFUL
       return res.json(
