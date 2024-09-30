@@ -79,7 +79,9 @@ class Feedbacks {
       });
 
       // console.log(data);
-      const countData = await prisma.feedbacks.count({ where: whereClause });
+      const countData = await prisma.feedbacks.count(
+        // { where: whereClause }
+      );
 
       return res.json(
         ApiResponse(
