@@ -19,15 +19,15 @@ class Feedbacks {
     // Limit is to know the number of entries to returned, offset is used to know how many entries to skip from the start
     // const { limit, offset, search, filters, itemType } = req.query;
     try {
-    //   // If limit or offset is undefined, throw error
-    //   if (limit === undefined || offset === undefined) {
-    //     throw new Error(
-    //       JSON.stringify({
-    //         apiCode: true,
-    //         message: "Limit and Offset must be passed",
-    //       })
-    //     );
-    //   }
+      //   // If limit or offset is undefined, throw error
+      //   if (limit === undefined || offset === undefined) {
+      //     throw new Error(
+      //       JSON.stringify({
+      //         apiCode: true,
+      //         message: "Limit and Offset must be passed",
+      //       })
+      //     );
+      //   }
 
       // Gets the items data that are not deleted with limit and offset for pagination
 
@@ -38,7 +38,7 @@ class Feedbacks {
       // let skip = parseInt(offset) * parseInt(limit);
 
       // Defining the where clause depending if there is a filter defined
-      // let whereClause = { deleted_at: null };
+      let whereClause = { id: { not: -1 } };
 
       // Search filter
       // whereClause.OR = [
@@ -48,19 +48,25 @@ class Feedbacks {
       // ];
 
       const data = await prisma.feedbacks.findMany({
-        // where: whereClause,
+        where: whereClause,
         select: {
           id: true,
-          Users:{
-            id:true, 
-            username:true
+          Users: {
+            select: {
+              id: true,
+              username: true,
+            },
           },
           EstateResidents: {
-            id: true,
-            full_name:true,
+            select: {
+              id: true,
+              full_name: true,
+            },
           },
-          Estate:{
-            estate_name: true
+          Estates: {
+            select: {
+              estate_name: true,
+            }
           },
           category_name: true,
           subcategory: true,
@@ -79,9 +85,10 @@ class Feedbacks {
       });
 
       // console.log(data);
-      const countData = await prisma.feedbacks.count(
+      const countData = await prisma.feedbacks
+        .count
         // { where: whereClause }
-      );
+        ();
 
       return res.json(
         ApiResponse(
@@ -372,8 +379,8 @@ class Feedbacks {
 
       // CREATES NEW ENTRY
       let data = await prisma.feedbacks.update({
-        where:{
-          id: feedbackData.id
+        where: {
+          id: feedbackData.id,
         },
         data: {
           ...updatedObj,
