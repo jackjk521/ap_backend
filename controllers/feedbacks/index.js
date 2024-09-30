@@ -7,8 +7,8 @@ const prisma = require("../../functions/prismaClient");
 const _MODULE = "FEEDBACK";
 
 class Feedbacks {
-  // GET: /api/items-management/
-  static async getItems(req, res) {
+  // GET: /api/feedbacks/
+  static async getFeedbacks(req, res) {
     /* 
       QUERY EXPECTED
       1. limit
@@ -17,81 +17,73 @@ class Feedbacks {
     */
 
     // Limit is to know the number of entries to returned, offset is used to know how many entries to skip from the start
-    const { limit, offset, search, filters, itemType } = req.query;
+    // const { limit, offset, search, filters, itemType } = req.query;
     try {
-      // If limit or offset is undefined, throw error
-      if (limit === undefined || offset === undefined) {
-        throw new Error(
-          JSON.stringify({
-            apiCode: true,
-            message: "Limit and Offset must be passed",
-          })
-        );
-      }
+    //   // If limit or offset is undefined, throw error
+    //   if (limit === undefined || offset === undefined) {
+    //     throw new Error(
+    //       JSON.stringify({
+    //         apiCode: true,
+    //         message: "Limit and Offset must be passed",
+    //       })
+    //     );
+    //   }
 
       // Gets the items data that are not deleted with limit and offset for pagination
 
-      let searchString = search === undefined ? "" : search;
-      let searchItemType =
-        itemType === undefined || itemType === "undefined" ? "" : itemType;
-      let take = parseInt(limit);
-      let skip = parseInt(offset) * parseInt(limit);
-
-      // Filter by column and the value to filter
-      let filterList = filters === "{}" || filters === undefined ? "" : filters;
+      // let searchString = search === undefined ? "" : search;
+      // let searchItemType =
+      //   itemType === undefined || itemType === "undefined" ? "" : itemType;
+      // let take = parseInt(limit);
+      // let skip = parseInt(offset) * parseInt(limit);
 
       // Defining the where clause depending if there is a filter defined
-      let whereClause = { deleted_at: null };
-
-      // Check if filterList is empty or not
-      // if (filterList != "") {
-      //   // Decode and parse the object passed from the URL
-      //   const decodedJson = decodeURIComponent(filterList);
-      //   const obj = JSON.parse(decodedJson);
-      //   whereClause.AND = [obj];
-      // }
+      // let whereClause = { deleted_at: null };
 
       // Search filter
-      whereClause.OR = [
-        { item_name: { contains: searchString, mode: "insensitive" } },
-        // { item_type: { contains: searchString, mode: "insensitive" } },
-        { brand: { contains: searchString, mode: "insensitive" } },
-      ];
+      // whereClause.OR = [
+      //   { item_name: { contains: searchString, mode: "insensitive" } },
+      //   // { item_type: { contains: searchString, mode: "insensitive" } },
+      //   { brand: { contains: searchString, mode: "insensitive" } },
+      // ];
 
-      if (searchItemType !== "") {
-        whereClause["item_type"] = searchItemType;
-      }
-
-      const data = await prisma.items.findMany({
-        where: whereClause,
+      const data = await prisma.feedbacks.findMany({
+        // where: whereClause,
         select: {
           id: true,
-          item_code: true,
-          item_name: true,
-          item_type: true,
-          brand: true,
-          description: true,
-          status: true,
-          remarks: true,
-          item_price: true,
-          item_category_id: true,
-          ItemCategories: {
-            select: {
-              item_category_name: true,
-            },
+          Users:{
+            id:true, 
+            username:true
           },
+          EstateResidents: {
+            id: true,
+            full_name:true,
+          },
+          Estate:{
+            estate_name: true
+          },
+          category_name: true,
+          subcategory: true,
+          concern_description: true,
+          solution_provided: true,
+          solution_updates: true,
+          estimate_fix_duration: true,
+          call_recording: true,
+          call_transcription: true,
+          maintenance_upload: true,
+          created_at: true,
         },
-        skip: skip,
-        take: take,
-        orderBy: [{ id: "desc" }],
+        // skip: skip,
+        // take: take,
+        orderBy: [{ created_at: "desc" }],
       });
 
       // console.log(data);
-      const countData = await prisma.items.count({ where: whereClause });
+      const countData = await prisma.feedbacks.count({ where: whereClause });
 
       return res.json(
         ApiResponse(
-          "Successfully fetched all items data",
+          "Successfully fetched all feedback data",
           { totalRecords: countData, fetchedData: data },
           StatusCodes.OK
         )

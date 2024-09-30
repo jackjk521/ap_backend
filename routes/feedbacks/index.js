@@ -6,8 +6,8 @@ const FeedbackController = require("../../controllers/feedbacks/index");
 
 // MAIN ROUTES
 
-// // GET: /api/items-management/
-// router.get("/", AsyncHandler(ItemsManagement.getItems));
+// GET: /api/feedbacks/
+router.get("/", AsyncHandler(FeedbackController.getFeedbacks));
 // // GET: /api/items-management/item-categories
 // router.get("/item-categories", AsyncHandler(ItemsManagement.getItemCategories));
 // // GET: /api/items-management/list
