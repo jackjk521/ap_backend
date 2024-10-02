@@ -84,23 +84,23 @@ const httpServer = http.createServer(app);
 create https (production) server instance
 ==============================*/
 let httpsServer;
-if (ENVIRONMENT !== "development") {
-  try {
-    httpsServer = https.createServer(
-      {
-        key: fs.readFileSync("./config/ssl/privkeys.pem", "utf-8"),
-        cert: fs.readFileSync("./config/ssl/full_chain.pem", "utf-8"),
-      },
-      app
-    );
-  } catch (error) {
-    console.error(
-      "Failed to start HTTPS server due to SSL certificate issue:",
-      error
-    );
-    httpsServer = null;
-  }
-}
+// if (ENVIRONMENT !== "development") {
+//   try {
+//     httpsServer = https.createServer(
+//       {
+//         key: fs.readFileSync("./config/ssl/privkeys.pem", "utf-8"),
+//         cert: fs.readFileSync("./config/ssl/full_chain.pem", "utf-8"),
+//       },
+//       app
+//     );
+//   } catch (error) {
+//     console.error(
+//       "Failed to start HTTPS server due to SSL certificate issue:",
+//       error
+//     );
+//     httpsServer = null;
+//   }
+// }
 
 /*==============================
 start server listen
