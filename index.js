@@ -121,7 +121,7 @@ if (ENVIRONMENT === "development") {
       );
     });
   } else {
-    console.warn(
+    console.log(
       "Falling back to HTTP in production due to HTTPS setup failure."
     );
     httpServer.listen(HTTP_PORT, SERVER_DOMAIN, () => {
