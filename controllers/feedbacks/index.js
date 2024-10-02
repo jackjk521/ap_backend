@@ -125,36 +125,54 @@ class Feedbacks {
     }
   }
 
-  // GET: /api/items-management/:id
-  static async getItem(req, res) {
+  // GET: /api/feedbacks/:id
+  static async getFeedback(req, res) {
     try {
       /* 
         PARAMETER EXPECTED
         1. id
       */
-      const itemId = req.params.id;
-      // Gets the specific item data
-      const { data, error } = await supabase
-        .from("items")
-        .select(
-          `
-        id, item_code, item_name, item_type, brand, item_price, status, description, remarks,
-        item_categories (
-          item_category_name
-        )
-      `
-        )
-        .eq("id", itemId)
-        .is("deleted_at", null)
-        .single();
+      const feedbackId = parseInt(req.params.id);
 
-      // Checks if there is an error from supabase, if there is it will show the error , if not then it will return the data
-      if (error) {
-        const { code, message } = error;
-        throw new Error(JSON.stringify({ code, message }));
-      }
+      let whereClause = { id: feedbackId };
+
+      // Gets the specific data
+      const data = await prisma.feedbacks.findFirst({
+        where: whereClause,
+        select: {
+          id: true,
+          Users: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
+          EstateResidents: {
+            select: {
+              id: true,
+              full_name: true,
+            },
+          },
+          Estates: {
+            select: {
+              estate_name: true,
+            },
+          },
+          category_name: true,
+          subcategory: true,
+          concern_description: true,
+          solution_provided: true,
+          solution_updates: true,
+          estimate_fix_duration: true,
+          call_recording: true,
+          call_transcription: true,
+          maintenance_upload: true,
+          created_at: true,
+        },
+      });
+
       return res.json(
-        ApiResponse("Successfully fetched specific item", data, StatusCodes.OK)
+        ApiResponse("Successfully fetched specific feedback", data, StatusCodes.OK)
       );
     } catch (error) {
       // Parsing error
@@ -167,7 +185,7 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in fetching specific item data";
+        message = "Error in fetching specific feedback data";
         data = error.message;
       }
 
@@ -425,47 +443,42 @@ class Feedbacks {
     }
   }
 
-  // PATCH: /api/items-management/:id
-  static async deleteItem(req, res) {
+  // PATCH: /api/feedbacks/:id
+  static async deleteFeedback(req, res) {
     try {
-      const logs = new LogsController();
+      // const logs = new LogsController();
       /* 
         PARAMETER EXPECTED
         1. id
       */
-      const itemId = req.params.id;
-      const deletedDate = localDate("DELETE");
+      const feedbackId = parseInt(req.params.id);
+      // const deletedDate = localDate("DELETE");
 
-      let body = req.body;
-      const session_uuid = body.session_user_id;
-      const session_fullname = body.session_fullname;
-      delete body["session_user_id"];
-      delete body["session_fullname"];
+      // let body = req.body;
+      // const session_uuid = body.session_user_id;
+      // const session_fullname = body.session_fullname;
+      // delete body["session_user_id"];
+      // delete body["session_fullname"];
 
-      // Updates the deleted_at of the selected item with the  value of current date and time
-      const { data, error } = await supabase
-        .from("items")
-        .update({ ...deletedDate })
-        // FIXME: Please check this one
-        .eq("id", itemId)
-        .is("deleted_at", null)
-        .select();
-
-      // Checks if there is an error from supabase, if there is it will show the error , if not then it will return the inserted data
-      if (error) {
-        const { code, message } = error;
-        throw new Error(JSON.stringify({ code, message }));
-      }
-
-      logs.createLog({
-        user_id: session_uuid,
-        action: "DELETE",
-        remarks: `${session_fullname} deleted item`,
-        module: _MODULE,
+      // Delete instance
+      const data = await prisma.feedbacks.update({
+        where: {
+          id: feedbackId,
+        },
+        data: {
+          updated_at: new Date(),
+        }
       });
 
+      // logs.createLog({
+      //   user_id: session_uuid,
+      //   action: "DELETE",
+      //   remarks: `${session_fullname} deleted item`,
+      //   module: _MODULE,
+      // });
+
       return res.json(
-        ApiResponse("Successfully deleted item", data, StatusCodes.OK)
+        ApiResponse("Successfully deleted feedback", data, StatusCodes.OK)
       );
     } catch (error) {
       // Parsing error
@@ -478,7 +491,7 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in deleting specific item data";
+        message = "Error in deleting specific feedback data";
         data = error.message;
       }
 

@@ -1,15 +1,14 @@
 const { StatusCodes } = require("http-status-codes");
 const ApiResponse = require("../response/apiResponse");
-const supabase = require("../../functions/supabaseClient");
+// const supabase = require("../../functions/supabaseClient");
 const prisma = require("../../functions/prismaClient");
 // const localDate = require("../../functions/localDate");
 // const LogsController = require("../logsManagement");
-const _MODULE = "FEEDBACK";
+const _MODULE = "USER";
 
-class Feedbacks {
-
-  // GET: /api/items-management/
-  static async getItems(req, res) {
+class Users {
+  // GET: /api/users/
+  static async getUsers(req, res) {
     /* 
       QUERY EXPECTED
       1. limit
@@ -18,81 +17,59 @@ class Feedbacks {
     */
 
     // Limit is to know the number of entries to returned, offset is used to know how many entries to skip from the start
-    const { limit, offset, search, filters, itemType } = req.query;
+    // const { limit, offset, search, filters, itemType } = req.query;
     try {
-      // If limit or offset is undefined, throw error
-      if (limit === undefined || offset === undefined) {
-        throw new Error(
-          JSON.stringify({
-            apiCode: true,
-            message: "Limit and Offset must be passed",
-          })
-        );
-      }
+      //   // If limit or offset is undefined, throw error
+      //   if (limit === undefined || offset === undefined) {
+      //     throw new Error(
+      //       JSON.stringify({
+      //         apiCode: true,
+      //         message: "Limit and Offset must be passed",
+      //       })
+      //     );
+      //   }
 
       // Gets the items data that are not deleted with limit and offset for pagination
 
-      let searchString = search === undefined ? "" : search;
-      let searchItemType =
-        itemType === undefined || itemType === "undefined" ? "" : itemType;
-      let take = parseInt(limit);
-      let skip = parseInt(offset) * parseInt(limit);
-
-      // Filter by column and the value to filter
-      let filterList = filters === "{}" || filters === undefined ? "" : filters;
+      // let searchString = search === undefined ? "" : search;
+      // let searchItemType =
+      //   itemType === undefined || itemType === "undefined" ? "" : itemType;
+      // let take = parseInt(limit);
+      // let skip = parseInt(offset) * parseInt(limit);
 
       // Defining the where clause depending if there is a filter defined
-      let whereClause = { deleted_at: null };
-
-      // Check if filterList is empty or not
-      // if (filterList != "") {
-      //   // Decode and parse the object passed from the URL
-      //   const decodedJson = decodeURIComponent(filterList);
-      //   const obj = JSON.parse(decodedJson);
-      //   whereClause.AND = [obj];
-      // }
+      let whereClause = { id: { not: -1 } };
 
       // Search filter
-      whereClause.OR = [
-        { item_name: { contains: searchString, mode: "insensitive" } },
-        // { item_type: { contains: searchString, mode: "insensitive" } },
-        { brand: { contains: searchString, mode: "insensitive" } },
-      ];
+      // whereClause.OR = [
+      //   { item_name: { contains: searchString, mode: "insensitive" } },
+      //   // { item_type: { contains: searchString, mode: "insensitive" } },
+      //   { brand: { contains: searchString, mode: "insensitive" } },
+      // ];
 
-      if (searchItemType !== "") {
-        whereClause["item_type"] = searchItemType;
-      }
-
-      const data = await prisma.items.findMany({
+      const data = await prisma.users.findMany({
         where: whereClause,
         select: {
           id: true,
-          item_code: true,
-          item_name: true,
-          item_type: true,
-          brand: true,
-          description: true,
-          status: true,
-          remarks: true,
-          item_price: true,
-          item_category_id: true,
-          ItemCategories: {
-            select: {
-              item_category_name: true,
-            },
-          },
+          email: true,
+          role: true,
+          username: true,
+          contact_no: true,
         },
-        skip: skip,
-        take: take,
-        orderBy: [{ id: "desc" }],
+        // skip: skip,
+        // take: take,
+        orderBy: [{ created_at: "desc" }],
       });
 
       // console.log(data);
-      const countData = await prisma.items.count({ where: whereClause });
+      const countData = await prisma.users
+        .count
+        // { where: whereClause }
+        ();
 
       return res.json(
         ApiResponse(
-          "Successfully fetched all items data",
+          "Successfully fetched all estate data",
           { totalRecords: countData, fetchedData: data },
           StatusCodes.OK
         )
@@ -125,36 +102,31 @@ class Feedbacks {
     }
   }
 
-  // GET: /api/items-management/:id
-  static async getItem(req, res) {
+  // GET: /api/users/:id
+  static async getUser(req, res) {
     try {
       /* 
         PARAMETER EXPECTED
         1. id
       */
-      const itemId = req.params.id;
-      // Gets the specific item data
-      const { data, error } = await supabase
-        .from("items")
-        .select(
-          `
-        id, item_code, item_name, item_type, brand, item_price, status, description, remarks,
-        item_categories (
-          item_category_name
-        )
-      `
-        )
-        .eq("id", itemId)
-        .is("deleted_at", null)
-        .single();
+      const userId = parseInt(req.params.id);
 
-      // Checks if there is an error from supabase, if there is it will show the error , if not then it will return the data
-      if (error) {
-        const { code, message } = error;
-        throw new Error(JSON.stringify({ code, message }));
-      }
+      let whereClause = { id: userId };
+
+      // Gets the specific data
+      const data = await prisma.users.findFirst({
+        where: whereClause,
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          username: true,
+          contact_no: true,
+        },
+      });
+
       return res.json(
-        ApiResponse("Successfully fetched specific item", data, StatusCodes.OK)
+        ApiResponse("Successfully fetched specific user", data, StatusCodes.OK)
       );
     } catch (error) {
       // Parsing error
@@ -167,7 +139,7 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in fetching specific item data";
+        message = "Error in fetching specific estate data";
         data = error.message;
       }
 
@@ -175,8 +147,135 @@ class Feedbacks {
     }
   }
 
-  // POST: /api/items-management/
-  static async addFeedback(req, res) {
+  // POST: /api/users/  (TO UPDATE)
+  static async addUser(req, res) {
+    /* 
+        DATA BODY THAT NEEDS TO BE PASSED
+        1. resident
+        2. estate
+        3. block
+        3. unit_no
+        5. category
+        6. subcategory
+        7. concern
+        8. solution
+        9. estimate_duration
+        10. call_recording
+        11. call_transcription
+        12. maintenance_upload
+        13: username
+    */
+
+    try {
+      // GET DATA FROM BODY
+      let body = req.body;
+
+      // CHECK IF BODY IS EMPTY OR NOT
+      if (Object.keys(body).length === 0) {
+        throw new Error(
+          JSON.stringify({ apiCode: true, message: "NO BODY PASSED" })
+        );
+      }
+      console.log(body);
+
+      // GET USER ID FROM CUSTOMER REPRESENTATIVE NAME
+
+      let userData = await prisma.users.findFirst({
+        where: {
+          username: body.username, // FROM BODY
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // GET ESTATE ID FROM ESTATE NAME
+      let estateData = await prisma.users.findFirst({
+        where: {
+          estate_name: body.estate, // FROM BODY
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // GET RESIDENT ENTRY FROM BLOCK , UNIT NO AND ESTATE ID
+      let residentData = await prisma.estateResidents.findFirst({
+        where: {
+          full_name: body.resident,
+          estate_id: estateData.id,
+          block: body.block,
+          unit_no: body.unit_no,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // NEW OBJECT TO ADD TO estate
+      let newObj = {
+        user_id: userData.id,
+        estate_id: estateData.id,
+        resident_id: residentData.id,
+        category_name: body.category_name,
+        subcategory: body.subcategory,
+        concern_description: body.concern_description,
+        solution_provided: body.solution_provided,
+        solution_updates: "PENDING",
+        estimate_fix_duration: body.estimate_fix_duration,
+        call_recording: body.call_recording,
+        call_transcription: body.call_transcription,
+        maintenance_upload: body.maintenance_upload,
+      };
+
+      console.log(newObj);
+
+      // CREATES NEW ENTRY
+      let data = [];
+      try {
+        data = await prisma.users.create({
+          data: {
+            ...newObj,
+          },
+        });
+        console.log(data);
+      } catch (error) {
+        console.error("Error creating estate:", error);
+      }
+
+      // RESPONSE OBJECT IF SUCCESSFUL
+      return res.json(
+        ApiResponse("Successfully created estate entry", data, StatusCodes.OK)
+      );
+    } catch (error) {
+      // Parsing error
+      // error.message is an error object property
+      error = JSON.parse(error.message);
+      let message = "Internal Server Error"; // This is a default message
+      let data = null; // Default value for data
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // Default value for status code
+
+      // Condition to check if issue is from supabase
+      // If error.code is truthy or has value, replace error message
+      if (error.code) {
+        message = "Error in creating new estate data";
+        data = error.message;
+      }
+
+      // Condition to check if issue is from the request itself
+      // e.g. No body, No Id and etc.
+      if (error.apiCode) {
+        message = error.message;
+        data = null;
+        statusCode = StatusCodes.BAD_REQUEST;
+      }
+
+      return res.json(ApiResponse(message, data, statusCode, true));
+    }
+  }
+
+  // PUT: /api/users/ (TO UPDATE)
+  static async updateUser(req, res) {
     /* 
         DATA BODY THAT NEEDS TO BE PASSED
         1. estate
@@ -195,54 +294,82 @@ class Feedbacks {
     try {
       // GET DATA FROM BODY
       let body = req.body;
-    //   const session_uuid = body.session_user_id;
-    //   const session_fullname = body.session_fullname;
-    //   delete body["session_user_id"];
-    //   delete body["session_fullname"];
-    //   const createdDate = localDate("CREATE");
-    //   const updatedDate = localDate("UPDATE");
 
       // CHECK IF BODY IS EMPTY OR NOT
       if (Object.keys(body).length === 0) {
         throw new Error(
-          JSON.stringify({ apiCode: true, message: "No body passed" })
+          JSON.stringify({ apiCode: true, message: "NO BODY PASSED" })
         );
       }
-      // console.log(body)
-
-      // GET USER ID FROM CUSTOMER REPRESENTATIVE NAME
+      console.log(body);
 
       // GET ESTATE ID FROM ESTATE NAME
+      let estateData = await prisma.users.findFirst({
+        where: {
+          estate_name: body.estate, // FROM BODY
+        },
+        select: {
+          id: true,
+        },
+      });
 
       // GET RESIDENT ENTRY FROM BLOCK , UNIT NO AND ESTATE ID
+      let residentData = await prisma.estateResidents.findFirst({
+        where: {
+          full_name: body.resident, // FROM BODY
+          estate_id: estateData.id,
+          block: body.block,
+          unit_no: body.unit_no,
+        },
+        select: {
+          id: true,
+        },
+      });
 
-      // NEW OBJECT TO ADD TO FEEDBACK
-      let newObj = {
-        user_id: 1, // change later
-        estate_id: 1, // change later
-        resident_id: 1, // change later
-        category_name: "",
-        subcategory: "",
-        concern_description: "",
-        solution_provided: "", 
-        estimate_fix_duration: "",
-        call_recording: "",
-        call_transcription: "",
-        maintenance_upload: "",
-      }
+      // GET estate ID FROM DATA FROM SHEET ROW
+      let feedbackData = await prisma.users.findFirst({
+        where: {
+          estate_id: estateData.id,
+          resident_id: residentData.id,
+          call_recording: body.call_recording, // UNIQUE per call
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      // UPDATED OBJECT TO ADD TO estate
+      let updatedObj = {
+        // user_id: userData.id,
+        // estate_id: estateData.id,
+        // resident_id: residentData.id,
+        category_name: body.category_name,
+        subcategory: body.subcategory,
+        // concern_description: body.concern_description,
+        // solution_provided: body.solution_provided,
+        solution_updates: body.solution_updates,
+        estimate_fix_duration: body.estimate_fix_duration,
+        // call_recording: body.call_recording,
+        // call_transcription: body.call_transcription,
+        // maintenance_upload: body.maintenance_upload,
+      };
+
+      console.log(updatedObj);
 
       // CREATES NEW ENTRY
-      let data = await prisma.feedbacks.create({
+      let data = await prisma.users.update({
+        where: {
+          id: feedbackData.id,
+        },
         data: {
-          ...newObj,
+          ...updatedObj,
         },
       });
 
       // RESPONSE OBJECT IF SUCCESSFUL
       return res.json(
-        ApiResponse("Successfully created feedback entry", data, StatusCodes.OK)
+        ApiResponse("Successfully updated estate entry", data, StatusCodes.OK)
       );
-
     } catch (error) {
       // Parsing error
       // error.message is an error object property
@@ -254,7 +381,7 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in creating new item data";
+        message = "Error in creating new estate data";
         data = error.message;
       }
 
@@ -270,132 +397,42 @@ class Feedbacks {
     }
   }
 
-  // PUT: /api/items-management/:id
-  static async updateItem(req, res) {
+  // PATCH: /api/users/:id (TO UPDATE)
+  static async deleteUser(req, res) {
     try {
-      const logs = new LogsController();
-      /* 
-          DATA THAT NEEDS TO BE PASSED
-          1. item_code
-          2. item_name
-          4. brand
-          5. description
-          6. remarks
-          7. item_price
-          8. status
-          
-          PARAMETER EXPECTED
-          1. id
-      */
-
-      const itemId = req.params.id;
-      const updatedDate = localDate("UPDATE");
-
-      // Get all details from the form / request body
-      let body = req.body;
-      const session_uuid = body.session_user_id;
-      const session_fullname = body.session_fullname;
-      delete body["session_user_id"];
-      delete body["session_fullname"];
-
-      // Checks if body passed has value
-      if (Object.keys(body).length === 0) {
-        throw new Error(
-          JSON.stringify({ apiCode: true, message: "No body passed" })
-        );
-      }
-      // Updates exisiting item
-      const { data, error } = await supabase
-        .from("items")
-        .update({ ...body, ...updatedDate })
-        .eq("id", itemId)
-        .is("deleted_at", null)
-        .select();
-
-      // Checks if there is an error from supabase, if there is it will show the error , if not then it will return the inserted data
-      if (error) {
-        const { code, message } = error;
-        throw new Error(JSON.stringify({ code, message }));
-      }
-
-      logs.createLog({
-        user_id: session_uuid,
-        action: "EDIT",
-        remarks: `${session_fullname} edited item`,
-        module: _MODULE,
-      });
-
-      return res.json(
-        ApiResponse("Successfully updated item", data, StatusCodes.OK)
-      );
-    } catch (error) {
-      // Parsing error
-      // error.message is an error object property
-      error = JSON.parse(error.message);
-      let message = "Internal Server Error"; // This is a default message
-      let data = null; // Default value for data
-      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // Default value for status code
-
-      // Condition to check if issue is from supabase
-      // If error.code is truthy or has value, replace error message
-      if (error.code) {
-        message = "Error in updating item data";
-        data = error.message;
-      }
-
-      // Condition to check if issue is from the request itself
-      // e.g. No body, No Id and etc.
-      if (error.apiCode) {
-        message = error.message;
-        data = null;
-        statusCode = StatusCodes.BAD_REQUEST;
-      }
-
-      return res.json(ApiResponse(message, data, statusCode, true));
-    }
-  }
-
-  // PATCH: /api/items-management/:id
-  static async deleteItem(req, res) {
-    try {
-      const logs = new LogsController();
+      // const logs = new LogsController();
       /* 
         PARAMETER EXPECTED
         1. id
       */
-      const itemId = req.params.id;
-      const deletedDate = localDate("DELETE");
+      const userId = parseInt(req.params.id);
+      // const deletedDate = localDate("DELETE");
 
-      let body = req.body;
-      const session_uuid = body.session_user_id;
-      const session_fullname = body.session_fullname;
-      delete body["session_user_id"];
-      delete body["session_fullname"];
+      // let body = req.body;
+      // const session_uuid = body.session_user_id;
+      // const session_fullname = body.session_fullname;
+      // delete body["session_user_id"];
+      // delete body["session_fullname"];
 
-      // Updates the deleted_at of the selected item with the  value of current date and time
-      const { data, error } = await supabase
-        .from("items")
-        .update({ ...deletedDate })
-        // FIXME: Please check this one
-        .eq("id", itemId)
-        .is("deleted_at", null)
-        .select();
-
-      // Checks if there is an error from supabase, if there is it will show the error , if not then it will return the inserted data
-      if (error) {
-        const { code, message } = error;
-        throw new Error(JSON.stringify({ code, message }));
-      }
-
-      logs.createLog({
-        user_id: session_uuid,
-        action: "DELETE",
-        remarks: `${session_fullname} deleted item`,
-        module: _MODULE,
+      // Delete instance
+      const data = await prisma.users.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          updated_at: new Date(),
+        },
       });
 
+      // logs.createLog({
+      //   user_id: session_uuid,
+      //   action: "DELETE",
+      //   remarks: `${session_fullname} deleted item`,
+      //   module: _MODULE,
+      // });
+
       return res.json(
-        ApiResponse("Successfully deleted item", data, StatusCodes.OK)
+        ApiResponse("Successfully deleted user", data, StatusCodes.OK)
       );
     } catch (error) {
       // Parsing error
@@ -408,14 +445,13 @@ class Feedbacks {
       // Condition to check if issue is from supabase
       // If error.code is truthy or has value, replace error message
       if (error.code) {
-        message = "Error in deleting specific item data";
+        message = "Error in deleting specific estate data";
         data = error.message;
       }
 
       return res.json(ApiResponse(message, data, statusCode, true));
     }
   }
-  
 }
 
-module.exports = Feedbacks;
+module.exports = Users;
