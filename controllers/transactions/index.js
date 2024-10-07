@@ -4,11 +4,11 @@ const ApiResponse = require("../response/apiResponse");
 const prisma = require("../../functions/prismaClient");
 // const localDate = require("../../functions/localDate");
 // const LogsController = require("../logsManagement");
-const _MODULE = "ESTATE";
+const _MODULE = "TRANSACTIONS";
 
-class Estates {
-  // GET: /api/estates/
-  static async getEstates(req, res) {
+class Transactions {
+  // GET: /api/transactions/
+  static async getTransactions(req, res) {
     /* 
       QUERY EXPECTED
       1. limit
@@ -38,7 +38,7 @@ class Estates {
       // let skip = parseInt(offset) * parseInt(limit);
 
       // Defining the where clause depending if there is a filter defined
-      let whereClause = { id: { not: -1 } };
+      let whereClause = { deleted_at: null };
 
       // Search filter
       // whereClause.OR = [
@@ -47,14 +47,20 @@ class Estates {
       //   { brand: { contains: searchString, mode: "insensitive" } },
       // ];
 
-      const data = await prisma.estates.findMany({
+      const data = await prisma.transactions.findMany({
         where: whereClause,
         select: {
           id: true,
-          estate_name:true, 
-          country_origin: true,
-          total_units: true,
-          property_type: true,
+          estate_name: true,
+          account_code: true,
+          posted_date: true,
+          ref_num_1: true,
+          ref_num_2: true,
+          description: true,
+          local_dr: true,
+          local_cr: true,
+          local_balance: true,
+          remarks: true,
         },
         // skip: skip,
         // take: take,
@@ -62,14 +68,11 @@ class Estates {
       });
 
       // console.log(data);
-      const countData = await prisma.estates
-        .count
-        // { where: whereClause }
-        ();
+      const countData = await prisma.transactions.count({ where: whereClause });
 
       return res.json(
         ApiResponse(
-          "Successfully fetched all estate data",
+          "Successfully fetched all transaction data",
           { totalRecords: countData, fetchedData: data },
           StatusCodes.OK
         )
@@ -102,7 +105,7 @@ class Estates {
     }
   }
 
-  // GET: /api/estates/:id
+  // GET: /api/transactions/:id
   static async getEstate(req, res) {
     try {
       /* 
@@ -118,7 +121,7 @@ class Estates {
         where: whereClause,
         select: {
           id: true,
-          estate_name:true, 
+          estate_name: true,
           country_origin: true,
           total_units: true,
           property_type: true,
@@ -126,7 +129,11 @@ class Estates {
       });
 
       return res.json(
-        ApiResponse("Successfully fetched specific estate", data, StatusCodes.OK)
+        ApiResponse(
+          "Successfully fetched specific estate",
+          data,
+          StatusCodes.OK
+        )
       );
     } catch (error) {
       // Parsing error
@@ -147,7 +154,7 @@ class Estates {
     }
   }
 
-  // POST: /api/estates/  (TO UPDATE)
+  // POST: /api/transactions/  (TO UPDATE)
   static async addEstate(req, res) {
     /* 
         DATA BODY THAT NEEDS TO BE PASSED
@@ -221,7 +228,7 @@ class Estates {
         subcategory: body.subcategory,
         concern_description: body.concern_description,
         solution_provided: body.solution_provided,
-        solution_updates: 'PENDING',
+        solution_updates: "PENDING",
         estimate_fix_duration: body.estimate_fix_duration,
         call_recording: body.call_recording,
         call_transcription: body.call_transcription,
@@ -235,7 +242,7 @@ class Estates {
       try {
         data = await prisma.estates.create({
           data: {
-            ...newObj
+            ...newObj,
           },
         });
         console.log(data);
@@ -274,7 +281,67 @@ class Estates {
     }
   }
 
-  // PUT: /api/estates/ (TO UPDATE)
+  // PUT: /api/transactions/db
+  static async updateTransactionDB(req, res) {
+    /* 
+          DATA BODY THAT NEEDS TO BE PASSED
+          1. action
+          2. merged_file
+      */
+
+    try {
+      // GET DATA FROM BODY
+      let body = req.body;
+
+      // CHECK IF BODY IS EMPTY OR NOT
+      if (Object.keys(body).length === 0) {
+        throw new Error(
+          JSON.stringify({ apiCode: true, message: "NO BODY PASSED" })
+        );
+      }
+      console.log(body);
+
+      // TRUNCATE THE TABLE FOR TRANSACTIONS
+
+      // POPULATE THE DATABASE WITH THE FILE CONTENT 
+
+      // console.log(updatedObj);
+
+      // CREATES NEW ENTRY
+      let data = {}
+
+      // RESPONSE OBJECT IF SUCCESSFUL
+      return res.json(
+        ApiResponse("Successfully updated estate entry", data, StatusCodes.OK)
+      );
+    } catch (error) {
+      // Parsing error
+      // error.message is an error object property
+      error = JSON.parse(error.message);
+      let message = "Internal Server Error"; // This is a default message
+      let data = null; // Default value for data
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // Default value for status code
+
+      // Condition to check if issue is from supabase
+      // If error.code is truthy or has value, replace error message
+      if (error.code) {
+        message = "Error in updating transactions db";
+        data = error.message;
+      }
+
+      // Condition to check if issue is from the request itself
+      // e.g. No body, No Id and etc.
+      if (error.apiCode) {
+        message = error.message;
+        data = null;
+        statusCode = StatusCodes.BAD_REQUEST;
+      }
+
+      return res.json(ApiResponse(message, data, statusCode, true));
+    }
+  }
+
+  // PUT: /api/transactions/:id (TO UPDATE)
   static async updateEstate(req, res) {
     /* 
         DATA BODY THAT NEEDS TO BE PASSED
@@ -397,7 +464,7 @@ class Estates {
     }
   }
 
-  // PATCH: /api/estates/:id (TO UPDATE)
+  // PATCH: /api/transactions/:id (TO UPDATE)
   static async deleteEstate(req, res) {
     try {
       // const logs = new LogsController();
@@ -421,7 +488,7 @@ class Estates {
         },
         data: {
           updated_at: new Date(),
-        }
+        },
       });
 
       // logs.createLog({
@@ -454,4 +521,4 @@ class Estates {
   }
 }
 
-module.exports = Estates;
+module.exports = Transactions;

@@ -17,6 +17,8 @@ router.use("/items-management", ItemsManagement);
 router.use("/feedbacks", FeedbackRoutes);
 router.use("/residents", ResidentRoutes);
 router.use("/estates", EstateRoutes);
+router.use("/transactions", TransactionsRoutes);
+
 
 
 module.exports = router;
