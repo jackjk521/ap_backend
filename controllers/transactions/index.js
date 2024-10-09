@@ -4,11 +4,20 @@ const ApiResponse = require("../response/apiResponse");
 const prisma = require("../../functions/prismaClient");
 // const localDate = require("../../functions/localDate");
 // const LogsController = require("../logsManagement");
-const _MODULE = "ESTATE";
+// DATE TOOLS
+const { isISO8601 } = require("validator"); // Import validator library
+const moment = require("moment");
+// READ AND WRITE FILE TOOLS
+const csv = require("csv-parser");
+const { Readable } = require("stream");
+const multer = require("multer");
 
-class Estates {
-  // GET: /api/estates/
-  static async getEstates(req, res) {
+const upload = multer();
+const _MODULE = "TRANSACTIONS";
+
+class Transactions {
+  // GET: /api/transactions/
+  static async getTransactions(req, res) {
     /* 
       QUERY EXPECTED
       1. limit
@@ -38,7 +47,7 @@ class Estates {
       // let skip = parseInt(offset) * parseInt(limit);
 
       // Defining the where clause depending if there is a filter defined
-      let whereClause = { id: { not: -1 } };
+      let whereClause = { deleted_at: null };
 
       // Search filter
       // whereClause.OR = [
@@ -47,14 +56,20 @@ class Estates {
       //   { brand: { contains: searchString, mode: "insensitive" } },
       // ];
 
-      const data = await prisma.estates.findMany({
+      const data = await prisma.transactions.findMany({
         where: whereClause,
         select: {
           id: true,
-          estate_name:true, 
-          country_origin: true,
-          total_units: true,
-          property_type: true,
+          estate_name: true,
+          account_code: true,
+          posted_date: true,
+          ref_num_1: true,
+          ref_num_2: true,
+          description: true,
+          local_dr: true,
+          local_cr: true,
+          local_balance: true,
+          remarks: true,
         },
         // skip: skip,
         // take: take,
@@ -62,14 +77,11 @@ class Estates {
       });
 
       // console.log(data);
-      const countData = await prisma.estates
-        .count
-        // { where: whereClause }
-        ();
+      const countData = await prisma.transactions.count({ where: whereClause });
 
       return res.json(
         ApiResponse(
-          "Successfully fetched all estate data",
+          "Successfully fetched all transaction data",
           { totalRecords: countData, fetchedData: data },
           StatusCodes.OK
         )
@@ -102,31 +114,43 @@ class Estates {
     }
   }
 
-  // GET: /api/estates/:id
-  static async getEstate(req, res) {
+  // GET: /api/transactions/:id
+  static async getTransaction(req, res) {
     try {
       /* 
         PARAMETER EXPECTED
         1. id
       */
-      const estateId = parseInt(req.params.id);
+      const transactionId = parseInt(req.params.id);
 
-      let whereClause = { id: estateId };
+      // ADD CHECKING FOR THE FINANCE COMMON FAQS
+      let whereClause = { id: transactionId };
 
       // Gets the specific data
-      const data = await prisma.estates.findFirst({
+      const data = await prisma.transactions.findFirst({
         where: whereClause,
         select: {
           id: true,
-          estate_name:true, 
-          country_origin: true,
-          total_units: true,
-          property_type: true,
+          id: true,
+          estate_name: true,
+          account_code: true,
+          posted_date: true,
+          ref_num_1: true,
+          ref_num_2: true,
+          description: true,
+          local_dr: true,
+          local_cr: true,
+          local_balance: true,
+          remarks: true,
         },
       });
 
       return res.json(
-        ApiResponse("Successfully fetched specific estate", data, StatusCodes.OK)
+        ApiResponse(
+          "Successfully fetched specific transaction",
+          data,
+          StatusCodes.OK
+        )
       );
     } catch (error) {
       // Parsing error
@@ -147,7 +171,69 @@ class Estates {
     }
   }
 
-  // POST: /api/estates/  (TO UPDATE)
+  // GET: /api/transactions/faqs
+  static async getTransactionFaqs(req, res) {
+    try {
+      /* 
+        QUERY EXPECTED
+        1. faq
+      */
+
+      const faq = req.body.faq;
+
+      // ADD CHECKING FOR THE FINANCE COMMON FAQS
+
+      let whereClause = {};
+      if (faq == "outstanding-balance") {
+        console.log("OUTSTANDING BALANCE");
+        return res.json(
+          ApiResponse(
+            "Successfully fetched specific transaction",
+            null,
+            // data,
+            StatusCodes.OK
+          )
+        );
+      }
+
+      // Gets the specific data
+      // const data = await prisma.transactions.findFirst({
+      //   where: whereClause,
+      //   select: {
+      //     id: true,
+      //     id: true,
+      //     estate_name: true,
+      //     account_code: true,
+      //     posted_date: true,
+      //     ref_num_1: true,
+      //     ref_num_2: true,
+      //     description: true,
+      //     local_dr: true,
+      //     local_cr: true,
+      //     local_balance: true,
+      //     remarks: true,
+      //   },
+      // });
+    } catch (error) {
+      // Parsing error
+      // error.message is an error object property
+      error = JSON.parse(error.message);
+      let message = "Internal Server Error"; // This is a default message
+      let data = null; // Default value for data
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // Default value for status code
+
+      // Condition to check if issue is from supabase
+      // If error.code is truthy or has value, replace error message
+      if (error.code) {
+        message = "Error in fetching specific estate data";
+        data = error.message;
+      }
+
+      return res.json(ApiResponse(message, data, statusCode, true));
+    }
+  }
+
+  // POST: /api/transactions/  (TO UPDATE)
   static async addEstate(req, res) {
     /* 
         DATA BODY THAT NEEDS TO BE PASSED
@@ -221,7 +307,7 @@ class Estates {
         subcategory: body.subcategory,
         concern_description: body.concern_description,
         solution_provided: body.solution_provided,
-        solution_updates: 'PENDING',
+        solution_updates: "PENDING",
         estimate_fix_duration: body.estimate_fix_duration,
         call_recording: body.call_recording,
         call_transcription: body.call_transcription,
@@ -235,7 +321,7 @@ class Estates {
       try {
         data = await prisma.estates.create({
           data: {
-            ...newObj
+            ...newObj,
           },
         });
         console.log(data);
@@ -274,7 +360,130 @@ class Estates {
     }
   }
 
-  // PUT: /api/estates/ (TO UPDATE)
+  // PUT: /api/transactions/db
+  static async updateTransactionDB(req, res) {
+    // console.log(req.files);
+
+    // LOOK INTO THIS
+    // // GET FILE NAME FROM QUERY PARAMETER
+    // const fileName = req.query.merged_file;
+    // if (!fileName) {
+    //   return res.status(400).json({ error: "No file specified" });
+    // }
+
+    // // READ FILE FROM FILE SYSTEM
+    // const filePath = path.join(__dirname, 'uploads', fileName);
+    // if (!fs.existsSync(filePath)) {
+    //   return res.status(404).json({ error: "File not found" });
+    // }
+
+    try {
+      // CHECK IF FILE IS PRESENT IN req.files
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const file = req.files.file;
+      // PARSE THE CSV FILE
+      const transactions = [];
+      const stream = Readable.from(file.data.toString());
+      stream
+        .pipe(csv())
+        .on("data", (row) => {
+          // Parse ID to INT
+          if (row.id) {
+            row.id = parseInt(row.id, 10);
+          }
+          // Parse monetary values to float
+          if (row.local_dr) {
+            row.local_dr = parseFloat(row.local_dr);
+          }
+          if (row.local_cr) {
+            row.local_cr = parseFloat(row.local_cr);
+          }
+          if (row.local_balance) {
+            row.local_balance = parseFloat(row.local_balance);
+          }
+
+          // Validate and parse posted_date
+          // Validate and parse posted_date
+          if (row.posted_date) {
+            const parsedDate = moment(row.posted_date, "YYYY-MM-DD", true);
+            if (!parsedDate.isValid()) {
+              console.error(
+                `Invalid date format for row: ${JSON.stringify(row)}`
+              );
+              return; // Skip this row if date is invalid
+            }
+            row.posted_date = parsedDate.toISOString(); // Convert to ISO-8601 format
+          }
+
+          // console.log(row);
+          transactions.push(row);
+        })
+        .on("end", async () => {
+          try {
+            // TODO: TEST THIS
+            // console.log(transactions);
+            // TRUNCATE THE TABLE FOR TRANSACTIONS
+            await prisma.transactions.deleteMany({});
+
+            // POPULATE THE DATABASE WITH THE FILE CONTENT USING INSERT MANY
+            await prisma.transactions.createMany({
+              data: transactions,
+            });
+
+            // RESPONSE OBJECT IF SUCCESSFUL
+            return res.json(
+              ApiResponse(
+                "Successfully updated transactions database",
+                null,
+                StatusCodes.OK
+              )
+            );
+          } catch (error) {
+            console.error("Error updating transactions database:", error);
+            return res
+              .status(StatusCodes.INTERNAL_SERVER_ERROR)
+              .json(
+                ApiResponse(
+                  "Failed to update transactions database",
+                  null,
+                  StatusCodes.INTERNAL_SERVER_ERROR,
+                  true
+                )
+              );
+          }
+        })
+        .on("error", (error) => {
+          console.error("Error parsing CSV file:", error);
+          return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(
+              ApiResponse(
+                "Failed to parse CSV file",
+                null,
+                StatusCodes.BAD_REQUEST,
+                true
+              )
+            );
+        });
+    } catch (error) {
+      console.error("Error processing request:", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json(
+          ApiResponse(
+            "Internal Server Error",
+            null,
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            true
+          )
+        );
+    }
+  }
+
+  // PUT: /api/transactions/:id (TO UPDATE)
   static async updateEstate(req, res) {
     /* 
         DATA BODY THAT NEEDS TO BE PASSED
@@ -397,7 +606,7 @@ class Estates {
     }
   }
 
-  // PATCH: /api/estates/:id (TO UPDATE)
+  // PATCH: /api/transactions/:id (TO UPDATE)
   static async deleteEstate(req, res) {
     try {
       // const logs = new LogsController();
@@ -421,7 +630,7 @@ class Estates {
         },
         data: {
           updated_at: new Date(),
-        }
+        },
       });
 
       // logs.createLog({
@@ -454,4 +663,4 @@ class Estates {
   }
 }
 
-module.exports = Estates;
+module.exports = Transactions;

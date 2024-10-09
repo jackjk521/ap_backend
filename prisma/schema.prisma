@@ -16,34 +16,37 @@ datasource db {
 }
 
 model Estates {
-  id             Int      @id @default(autoincrement())
-  estate_name    String   @default("")
-  country_origin String   @db.VarChar(100)
-  total_units    Int      @default(0)
-  property_type  String   @db.VarChar(100)
-  created_at     DateTime @default(now()) @db.Timestamp()
-  updated_at     DateTime @default(now()) @updatedAt @db.Timestamp()
+  id             Int       @id @default(autoincrement())
+  estate_name    String    @default("")
+  country_origin String    @db.VarChar(100)
+  total_units    Int       @default(0)
+  property_type  String    @db.VarChar(100)
+  created_at     DateTime  @default(now()) @db.Timestamp()
+  updated_at     DateTime? @updatedAt @db.Timestamp()
+  deleted_at     DateTime? @db.Timestamp()
 
   EstateResidents EstateResidents[]
   Feedbacks       Feedbacks[]
   Concerns        Concerns[]
-  Transactions    Transactions[]
+  // Transactions    Transactions
+  Facilities      Facilities[]
 
   @@map("estates")
 }
 
 model EstateResidents {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   estate_id     Int
-  email         String   @db.VarChar(255)
-  account_code  String   @db.VarChar(50)
-  block         String   @db.VarChar(10)
-  unit_no       String   @db.VarChar(10)
-  full_name     String   @db.VarChar(255)
-  resident_type String   @db.VarChar(20)
-  contact_no    String   @db.VarChar(20)
-  created_at    DateTime @default(now()) @db.Timestamp()
-  updated_at    DateTime @default(now()) @updatedAt @db.Timestamp()
+  email         String    @db.VarChar(255)
+  account_code  String    @db.VarChar(50)
+  block         String    @db.VarChar(10)
+  unit_no       String    @db.VarChar(10)
+  full_name     String    @db.VarChar(255)
+  resident_type String    @db.VarChar(20)
+  contact_no    String    @db.VarChar(20)
+  created_at    DateTime  @default(now()) @db.Timestamp()
+  updated_at    DateTime? @updatedAt @db.Timestamp()
+  deleted_at    DateTime? @db.Timestamp()
 
   Estates   Estates?    @relation(fields: [estate_id], references: [id])
   Feedbacks Feedbacks[]
@@ -52,29 +55,44 @@ model EstateResidents {
 }
 
 model Users {
-  id         Int      @id @default(autoincrement())
-  email      String   @db.VarChar(255)
-  role       String   @db.VarChar(100)
-  username   String   @db.Text
-  contact_no String   @db.VarChar(20)
-  created_at DateTime @default(now()) @db.Timestamp()
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp()
+  id         Int       @id @default(autoincrement())
+  email      String    @db.VarChar(255)
+  role       String    @db.VarChar(100)
+  username   String    @db.Text
+  contact_no String    @db.VarChar(20)
+  created_at DateTime  @default(now()) @db.Timestamp()
+  updated_at DateTime? @updatedAt @db.Timestamp()
+  deleted_at DateTime? @db.Timestamp()
 
   Feedbacks Feedbacks[]
 
   @@map("users")
 }
 
+model Facilities {
+  id            Int       @id @default(autoincrement())
+  estate_id     Int
+  facility_name String    @db.VarChar(50)
+  created_at    DateTime  @default(now()) @db.Timestamp()
+  updated_at    DateTime? @updatedAt @db.Timestamp()
+  deleted_at    DateTime? @db.Timestamp()
+
+  Estates Estates? @relation(fields: [estate_id], references: [id])
+
+  @@map("facilities")
+}
+
 model Concerns {
-  id              Int      @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   estate_id       Int
-  concern_name    String   @db.VarChar(50)
-  concern_type    String   @db.VarChar(50)
-  fix_duration    String   @db.VarChar(50)
-  currency_symbol String   @db.Char(5)
-  price_range     String   @db.VarChar(50)
-  created_at      DateTime @default(now()) @db.Timestamp()
-  updated_at      DateTime @default(now()) @updatedAt @db.Timestamp()
+  concern_name    String    @db.VarChar(50)
+  concern_type    String    @db.VarChar(50)
+  fix_duration    String    @db.VarChar(50)
+  currency_symbol String    @db.Char(5)
+  price_range     String    @db.VarChar(50)
+  created_at      DateTime  @default(now()) @db.Timestamp()
+  updated_at      DateTime? @updatedAt @db.Timestamp()
+  deleted_at      DateTime? @db.Timestamp()
 
   Estates Estates? @relation(fields: [estate_id], references: [id])
 
@@ -82,40 +100,42 @@ model Concerns {
 }
 
 model Transactions {
-  id            Int      @id @default(autoincrement())
-  account_code  String   @db.VarChar(50)
-  posted_date   DateTime @db.Date()
-  ref_num_1     String   @db.VarChar(50)
-  ref_num_2     String   @db.VarChar(50)
-  description   String   @db.Text()
-  local_dr      Float    @default(0.00) @db.DoublePrecision()
-  local_cr      Float    @default(0.00) @db.DoublePrecision()
-  local_balance Float    @default(0.00) @db.DoublePrecision()
-  created_at    DateTime @default(now()) @db.Timestamp()
-  updated_at    DateTime @default(now()) @updatedAt @db.Timestamp()
+  id            Int       @id @default(autoincrement())
+  estate_name   String?
+  account_code  String    @db.VarChar(50)
+  posted_date   DateTime  @db.Date()
+  ref_num_1     String    @db.VarChar(50)
+  ref_num_2     String    @db.VarChar(50)
+  description   String    @db.Text()
+  local_dr      Float     @default(0.00) @db.DoublePrecision()
+  local_cr      Float     @default(0.00) @db.DoublePrecision()
+  local_balance Float     @default(0.00) @db.DoublePrecision()
+  remarks       String?   @db.Text()
+  created_at    DateTime  @default(now()) @db.Timestamp()
+  updated_at    DateTime? @updatedAt @db.Timestamp()
+  deleted_at    DateTime? @db.Timestamp()
 
-  Estates   Estates? @relation(fields: [estatesId], references: [id])
-  estatesId Int?
-
+  // Estates Estates? @relation(fields: [estate_id], references: [id])
   @@map("transactions")
 }
 
 model Feedbacks {
-  id                    Int      @id @default(autoincrement())
+  id                    Int       @id @default(autoincrement())
   user_id               Int?
   estate_id             Int
   resident_id           Int
-  category_name         String   @db.VarChar(255)
-  subcategory           String   @db.VarChar(100)
-  concern_description   String   @db.Text
-  solution_provided     String   @db.Text
-  solution_updates      String?  @db.Text
-  estimate_fix_duration String   @db.VarChar(100)
-  call_recording        String   @db.VarChar(255)
-  call_transcription    String   @db.VarChar(255)
-  maintenance_upload    String   @db.VarChar(255)
-  created_at            DateTime @default(now()) @db.Timestamp()
-  updated_at            DateTime @default(now()) @updatedAt @db.Timestamp()
+  category_name         String    @db.VarChar(255)
+  subcategory           String    @db.VarChar(100)
+  concern_description   String    @db.Text
+  solution_provided     String    @db.Text
+  solution_updates      String?   @db.Text
+  estimate_fix_duration String    @db.VarChar(100)
+  call_recording        String    @db.VarChar(255)
+  call_transcription    String    @db.VarChar(255)
+  maintenance_upload    String    @db.VarChar(255)
+  created_at            DateTime  @default(now()) @db.Timestamp()
+  updated_at            DateTime? @updatedAt @db.Timestamp()
+  deleted_at            DateTime? @db.Timestamp()
 
   Users           Users?           @relation(fields: [user_id], references: [id])
   Estates         Estates?         @relation(fields: [estate_id], references: [id])

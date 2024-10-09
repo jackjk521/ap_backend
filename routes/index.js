@@ -8,7 +8,7 @@ const ResidentRoutes = require("./residents/index");
 const EstateRoutes = require("./estates/index");
 const UserRoutes = require("./estates/index");
 const ConcernRoutes = require("./estates/index");
-const TransactionsRoutes = require("./estates/index");
+const TransactionsRoutes = require("./transactions/index");
 
 
 // PREFIX ASSIGNMENT (/api/<prefix>/)
@@ -17,6 +17,8 @@ router.use("/items-management", ItemsManagement);
 router.use("/feedbacks", FeedbackRoutes);
 router.use("/residents", ResidentRoutes);
 router.use("/estates", EstateRoutes);
+router.use("/transactions", TransactionsRoutes);
+
 
 
 module.exports = router;
