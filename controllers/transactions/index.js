@@ -4,6 +4,13 @@ const ApiResponse = require("../response/apiResponse");
 const prisma = require("../../functions/prismaClient");
 // const localDate = require("../../functions/localDate");
 // const LogsController = require("../logsManagement");
+
+// READ AND WRITE FILE TOOLS
+const csv = require("csv-parser");
+const { Readable } = require("stream");
+const multer = require("multer");
+
+const upload = multer();
 const _MODULE = "TRANSACTIONS";
 
 class Transactions {
@@ -106,35 +113,105 @@ class Transactions {
   }
 
   // GET: /api/transactions/:id
-  static async getEstate(req, res) {
+  static async getTransaction(req, res) {
     try {
       /* 
         PARAMETER EXPECTED
         1. id
       */
-      const estateId = parseInt(req.params.id);
+      const transactionId = parseInt(req.params.id);
 
-      let whereClause = { id: estateId };
+      // ADD CHECKING FOR THE FINANCE COMMON FAQS
+      let whereClause = { id: transactionId };
 
       // Gets the specific data
-      const data = await prisma.estates.findFirst({
+      const data = await prisma.transactions.findFirst({
         where: whereClause,
         select: {
           id: true,
+          id: true,
           estate_name: true,
-          country_origin: true,
-          total_units: true,
-          property_type: true,
+          account_code: true,
+          posted_date: true,
+          ref_num_1: true,
+          ref_num_2: true,
+          description: true,
+          local_dr: true,
+          local_cr: true,
+          local_balance: true,
+          remarks: true,
         },
       });
 
       return res.json(
         ApiResponse(
-          "Successfully fetched specific estate",
+          "Successfully fetched specific transaction",
           data,
           StatusCodes.OK
         )
       );
+    } catch (error) {
+      // Parsing error
+      // error.message is an error object property
+      error = JSON.parse(error.message);
+      let message = "Internal Server Error"; // This is a default message
+      let data = null; // Default value for data
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // Default value for status code
+
+      // Condition to check if issue is from supabase
+      // If error.code is truthy or has value, replace error message
+      if (error.code) {
+        message = "Error in fetching specific estate data";
+        data = error.message;
+      }
+
+      return res.json(ApiResponse(message, data, statusCode, true));
+    }
+  }
+
+  // GET: /api/transactions/faqs
+  static async getTransactionFaqs(req, res) {
+    try {
+      /* 
+        QUERY EXPECTED
+        1. faq
+      */
+
+      const faq = req.body.faq;
+
+      // ADD CHECKING FOR THE FINANCE COMMON FAQS
+
+      let whereClause = { };
+      if (faq ==  "outstanding-balance") {
+        console.log("OUTSTANDING BALANCE");
+        return res.json(
+          ApiResponse(
+            "Successfully fetched specific transaction",
+            null,
+            // data,
+            StatusCodes.OK
+          )
+        );
+      }
+
+      // Gets the specific data
+      // const data = await prisma.transactions.findFirst({
+      //   where: whereClause,
+      //   select: {
+      //     id: true,
+      //     id: true,
+      //     estate_name: true,
+      //     account_code: true,
+      //     posted_date: true,
+      //     ref_num_1: true,
+      //     ref_num_2: true,
+      //     description: true,
+      //     local_dr: true,
+      //     local_cr: true,
+      //     local_balance: true,
+      //     remarks: true,
+      //   },
+      // });
     } catch (error) {
       // Parsing error
       // error.message is an error object property
@@ -283,62 +360,100 @@ class Transactions {
 
   // PUT: /api/transactions/db
   static async updateTransactionDB(req, res) {
-    /* 
-          DATA BODY THAT NEEDS TO BE PASSED
-          1. action
-          2. merged_file
-      */
+    // LOOK INTO THIS
+    // // GET FILE NAME FROM QUERY PARAMETER
+    // const fileName = req.query.merged_file;
+    // if (!fileName) {
+    //   return res.status(400).json({ error: "No file specified" });
+    // }
 
-    try {
-      // GET DATA FROM BODY
-      let body = req.body;
+    // // READ FILE FROM FILE SYSTEM
+    // const filePath = path.join(__dirname, 'uploads', fileName);
+    // if (!fs.existsSync(filePath)) {
+    //   return res.status(404).json({ error: "File not found" });
+    // }
 
-      // CHECK IF BODY IS EMPTY OR NOT
-      if (Object.keys(body).length === 0) {
-        throw new Error(
-          JSON.stringify({ apiCode: true, message: "NO BODY PASSED" })
-        );
-      }
-      console.log(body);
-
-      // TRUNCATE THE TABLE FOR TRANSACTIONS
-
-      // POPULATE THE DATABASE WITH THE FILE CONTENT 
-
-      // console.log(updatedObj);
-
-      // CREATES NEW ENTRY
-      let data = {}
-
-      // RESPONSE OBJECT IF SUCCESSFUL
-      return res.json(
-        ApiResponse("Successfully updated estate entry", data, StatusCodes.OK)
-      );
-    } catch (error) {
-      // Parsing error
-      // error.message is an error object property
-      error = JSON.parse(error.message);
-      let message = "Internal Server Error"; // This is a default message
-      let data = null; // Default value for data
-      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR; // Default value for status code
-
-      // Condition to check if issue is from supabase
-      // If error.code is truthy or has value, replace error message
-      if (error.code) {
-        message = "Error in updating transactions db";
-        data = error.message;
+    // Use multer to handle file upload
+    upload.single("merged_file")(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: "File upload failed" });
       }
 
-      // Condition to check if issue is from the request itself
-      // e.g. No body, No Id and etc.
-      if (error.apiCode) {
-        message = error.message;
-        data = null;
-        statusCode = StatusCodes.BAD_REQUEST;
-      }
+      try {
+        console.log(req.file);
+        // CHECK IF FILE IS PRESENT
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
 
-      return res.json(ApiResponse(message, data, statusCode, true));
-    }
+        // PARSE THE CSV FILE
+        const transactions = [];
+        const stream = Readable.from(req.file.buffer.toString());
+        stream
+          .pipe(csv())
+          .on("data", (row) => {
+            transactions.push(row);
+          })
+          .on("end", async () => {
+            try {
+              console.log(transactions);
+              // // TRUNCATE THE TABLE FOR TRANSACTIONS
+              // await prisma.transactions.deleteMany({});
+
+              // // POPULATE THE DATABASE WITH THE FILE CONTENT USING INSERT MANY
+              // await prisma.transactions.createMany({
+              //   data: transactions,
+              // });
+
+              // RESPONSE OBJECT IF SUCCESSFUL
+              return res.json(
+                ApiResponse(
+                  "Successfully updated transactions database",
+                  null,
+                  StatusCodes.OK
+                )
+              );
+            } catch (error) {
+              console.error("Error updating transactions database:", error);
+              return res
+                .status(StatusCodes.INTERNAL_SERVER_ERROR)
+                .json(
+                  ApiResponse(
+                    "Failed to update transactions database",
+                    null,
+                    StatusCodes.INTERNAL_SERVER_ERROR,
+                    true
+                  )
+                );
+            }
+          })
+          .on("error", (error) => {
+            console.error("Error parsing CSV file:", error);
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json(
+                ApiResponse(
+                  "Failed to parse CSV file",
+                  null,
+                  StatusCodes.BAD_REQUEST,
+                  true
+                )
+              );
+          });
+      } catch (error) {
+        console.error("Error processing request:", error);
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(
+            ApiResponse(
+              "Internal Server Error",
+              null,
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              true
+            )
+          );
+      }
+    });
   }
 
   // PUT: /api/transactions/:id (TO UPDATE)

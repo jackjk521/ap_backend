@@ -8,7 +8,7 @@ const ResidentRoutes = require("./residents/index");
 const EstateRoutes = require("./estates/index");
 const UserRoutes = require("./estates/index");
 const ConcernRoutes = require("./estates/index");
-const TransactionsRoutes = require("./estates/index");
+const TransactionsRoutes = require("./transactions/index");
 
 
 // PREFIX ASSIGNMENT (/api/<prefix>/)

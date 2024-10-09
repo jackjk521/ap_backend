@@ -12,8 +12,12 @@ router.put("/", AsyncHandler(TransactionController.updateTransactionDB));
 
 // GET: /api/transactions/
 router.get("/", AsyncHandler(TransactionController.getTransactions));
+// PUT: /api/transactions/db
+router.put("/db", AsyncHandler(TransactionController.updateTransactionDB));
+// GET: /api/transactions/faqs
+router.get("/faqs", AsyncHandler(TransactionController.getTransactionFaqs));
 // GET: /api/transactions/:id
-router.get("/:id", AsyncHandler(TransactionController.getEstate));
+router.get("/:id", AsyncHandler(TransactionController.getTransaction));
 // POST: /api/transactions/
 router.post("/", AsyncHandler(TransactionController.addEstate));
 // PUT: /api/transactions/
