@@ -131,7 +131,6 @@ class Transactions {
         where: whereClause,
         select: {
           id: true,
-          id: true,
           estate_name: true,
           account_code: true,
           posted_date: true,
@@ -175,8 +174,9 @@ class Transactions {
   static async getTransactionFaqs(req, res) {
     try {
       /* 
-        QUERY EXPECTED
+        BODY EXPECTED
         1. faq
+        2. account_code
       */
 
       const faq = req.body.faq;
@@ -185,10 +185,31 @@ class Transactions {
 
       let whereClause = {};
       if (faq == "outstanding-balance") {
-        console.log("OUTSTANDING BALANCE");
+        whereClause = {
+          account_code: req.body.account_code,
+        };
+
+        const data = await prisma.transactions.findFirst({
+          where: whereClause,
+          select: {
+            id: true,
+            account_code: true,
+            posted_date: true,
+            local_dr: true,
+            local_cr: true,
+            local_balance: true,
+          },
+          orderBy: [{ posted_date: "desc" }],
+        });
+
+        const as_of_date = data.posted_date.toLocaleString("default", {
+          month: "long",
+          year: "numeric",
+        });
+
         return res.json(
           ApiResponse(
-            "Successfully fetched specific transaction",
+            `Outstanding balance as of ${as_of_date}: SGD ${data.local_balance}`,
             null,
             // data,
             StatusCodes.OK
