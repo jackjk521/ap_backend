@@ -29,6 +29,7 @@ model Estates {
   Feedbacks       Feedbacks[]
   Concerns        Concerns[]
   // Transactions    Transactions
+  Facilities      Facilities[]
 
   @@map("estates")
 }
@@ -68,6 +69,19 @@ model Users {
   @@map("users")
 }
 
+model Facilities {
+  id            Int       @id @default(autoincrement())
+  estate_id     Int
+  facility_name String    @db.VarChar(50)
+  created_at    DateTime  @default(now()) @db.Timestamp()
+  updated_at    DateTime? @updatedAt @db.Timestamp()
+  deleted_at    DateTime? @db.Timestamp()
+
+  Estates Estates? @relation(fields: [estate_id], references: [id])
+
+  @@map("facilities")
+}
+
 model Concerns {
   id              Int       @id @default(autoincrement())
   estate_id       Int
@@ -102,7 +116,6 @@ model Transactions {
   deleted_at    DateTime? @db.Timestamp()
 
   // Estates Estates? @relation(fields: [estate_id], references: [id])
-
   @@map("transactions")
 }
 

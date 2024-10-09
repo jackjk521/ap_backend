@@ -4,7 +4,9 @@ const ApiResponse = require("../response/apiResponse");
 const prisma = require("../../functions/prismaClient");
 // const localDate = require("../../functions/localDate");
 // const LogsController = require("../logsManagement");
-
+// DATE TOOLS
+const { isISO8601 } = require("validator"); // Import validator library
+const moment = require("moment");
 // READ AND WRITE FILE TOOLS
 const csv = require("csv-parser");
 const { Readable } = require("stream");
@@ -181,8 +183,8 @@ class Transactions {
 
       // ADD CHECKING FOR THE FINANCE COMMON FAQS
 
-      let whereClause = { };
-      if (faq ==  "outstanding-balance") {
+      let whereClause = {};
+      if (faq == "outstanding-balance") {
         console.log("OUTSTANDING BALANCE");
         return res.json(
           ApiResponse(
@@ -360,6 +362,8 @@ class Transactions {
 
   // PUT: /api/transactions/db
   static async updateTransactionDB(req, res) {
+    // console.log(req.files);
+
     // LOOK INTO THIS
     // // GET FILE NAME FROM QUERY PARAMETER
     // const fileName = req.query.merged_file;
@@ -373,87 +377,110 @@ class Transactions {
     //   return res.status(404).json({ error: "File not found" });
     // }
 
-    // Use multer to handle file upload
-    upload.single("merged_file")(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({ error: "File upload failed" });
+    try {
+      // CHECK IF FILE IS PRESENT IN req.files
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({ error: "No file uploaded" });
       }
 
-      try {
-        console.log(req.file);
-        // CHECK IF FILE IS PRESENT
-        if (!req.file) {
-          return res.status(400).json({ error: "No file uploaded" });
-        }
+      const file = req.files.file;
+      // PARSE THE CSV FILE
+      const transactions = [];
+      const stream = Readable.from(file.data.toString());
+      stream
+        .pipe(csv())
+        .on("data", (row) => {
+          // Parse ID to INT
+          if (row.id) {
+            row.id = parseInt(row.id, 10);
+          }
+          // Parse monetary values to float
+          if (row.local_dr) {
+            row.local_dr = parseFloat(row.local_dr);
+          }
+          if (row.local_cr) {
+            row.local_cr = parseFloat(row.local_cr);
+          }
+          if (row.local_balance) {
+            row.local_balance = parseFloat(row.local_balance);
+          }
 
-        // PARSE THE CSV FILE
-        const transactions = [];
-        const stream = Readable.from(req.file.buffer.toString());
-        stream
-          .pipe(csv())
-          .on("data", (row) => {
-            transactions.push(row);
-          })
-          .on("end", async () => {
-            try {
-              console.log(transactions);
-              // // TRUNCATE THE TABLE FOR TRANSACTIONS
-              // await prisma.transactions.deleteMany({});
-
-              // // POPULATE THE DATABASE WITH THE FILE CONTENT USING INSERT MANY
-              // await prisma.transactions.createMany({
-              //   data: transactions,
-              // });
-
-              // RESPONSE OBJECT IF SUCCESSFUL
-              return res.json(
-                ApiResponse(
-                  "Successfully updated transactions database",
-                  null,
-                  StatusCodes.OK
-                )
+          // Validate and parse posted_date
+          // Validate and parse posted_date
+          if (row.posted_date) {
+            const parsedDate = moment(row.posted_date, "YYYY-MM-DD", true);
+            if (!parsedDate.isValid()) {
+              console.error(
+                `Invalid date format for row: ${JSON.stringify(row)}`
               );
-            } catch (error) {
-              console.error("Error updating transactions database:", error);
-              return res
-                .status(StatusCodes.INTERNAL_SERVER_ERROR)
-                .json(
-                  ApiResponse(
-                    "Failed to update transactions database",
-                    null,
-                    StatusCodes.INTERNAL_SERVER_ERROR,
-                    true
-                  )
-                );
+              return; // Skip this row if date is invalid
             }
-          })
-          .on("error", (error) => {
-            console.error("Error parsing CSV file:", error);
+            row.posted_date = parsedDate.toISOString(); // Convert to ISO-8601 format
+          }
+
+          // console.log(row);
+          transactions.push(row);
+        })
+        .on("end", async () => {
+          try {
+            // TODO: TEST THIS
+            // console.log(transactions);
+            // TRUNCATE THE TABLE FOR TRANSACTIONS
+            await prisma.transactions.deleteMany({});
+
+            // POPULATE THE DATABASE WITH THE FILE CONTENT USING INSERT MANY
+            await prisma.transactions.createMany({
+              data: transactions,
+            });
+
+            // RESPONSE OBJECT IF SUCCESSFUL
+            return res.json(
+              ApiResponse(
+                "Successfully updated transactions database",
+                null,
+                StatusCodes.OK
+              )
+            );
+          } catch (error) {
+            console.error("Error updating transactions database:", error);
             return res
-              .status(StatusCodes.BAD_REQUEST)
+              .status(StatusCodes.INTERNAL_SERVER_ERROR)
               .json(
                 ApiResponse(
-                  "Failed to parse CSV file",
+                  "Failed to update transactions database",
                   null,
-                  StatusCodes.BAD_REQUEST,
+                  StatusCodes.INTERNAL_SERVER_ERROR,
                   true
                 )
               );
-          });
-      } catch (error) {
-        console.error("Error processing request:", error);
-        return res
-          .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .json(
-            ApiResponse(
-              "Internal Server Error",
-              null,
-              StatusCodes.INTERNAL_SERVER_ERROR,
-              true
-            )
-          );
-      }
-    });
+          }
+        })
+        .on("error", (error) => {
+          console.error("Error parsing CSV file:", error);
+          return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(
+              ApiResponse(
+                "Failed to parse CSV file",
+                null,
+                StatusCodes.BAD_REQUEST,
+                true
+              )
+            );
+        });
+    } catch (error) {
+      console.error("Error processing request:", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json(
+          ApiResponse(
+            "Internal Server Error",
+            null,
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            true
+          )
+        );
+    }
   }
 
   // PUT: /api/transactions/:id (TO UPDATE)

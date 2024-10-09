@@ -37,6 +37,7 @@
     "rotating-file-stream": "^3.2.3",
     "stream": "^0.0.3",
     "sweetalert2": "^11.13.2",
+    "validator": "^13.12.0",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
